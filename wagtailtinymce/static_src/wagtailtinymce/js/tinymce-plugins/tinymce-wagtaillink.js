@@ -54,7 +54,7 @@
                     anchorElm = editor.dom.getParent(selectedElm, 'a[href]');
                     onlyText = isOnlyTextSelected(anchorElm);
                     text = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : lastSelection.getContent({format: 'text'});
-                    href = anchorElm ? dom.getAttrib(anchorElm, 'href') : '';
+                    href = anchorElm ? editor.dom.getAttrib(anchorElm, 'href') : '';
 
                     ModalWorkflow({
                         url: url,
@@ -85,9 +85,10 @@
                                     if (anchorElm) {
                                         editor.focus();
 
-                                        dom.setAttribs(anchorElm, linkAttrs);
+                                        editor.dom.setAttribs(anchorElm, linkAttrs);
+                                        editor.dom.setHTML(anchorElm, editor.dom.encode(linkAttrs.title));
 
-                                        selection.select(anchorElm);
+                                        editor.selection.setNode(anchorElm);
                                         editor.undoManager.add();
                                     } else {
                                         if (onlyText) {

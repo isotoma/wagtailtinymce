@@ -79,7 +79,11 @@
                                 function insertLink() {
                                     var linkAttrs = {
                                         href: href,
-                                        title: pageData.title ? pageData.title : text
+                                        title: (
+                                            pageData.title
+                                                ? (pageData.title === href && text.length ? text : pageData.title)
+                                                : text
+                                            )
                                     };
 
                                     if (anchorElm) {
@@ -92,7 +96,7 @@
                                         editor.undoManager.add();
                                     } else {
                                         if (onlyText) {
-                                            editor.insertContent(editor.dom.createHTML('a', linkAttrs, editor.dom.encode(pageData.title || text)));
+                                            editor.insertContent(editor.dom.createHTML('a', linkAttrs, editor.dom.encode(linkAttrs.title)));
                                         } else {
                                             editor.execCommand('mceInsertLink', false, linkAttrs);
                                         }

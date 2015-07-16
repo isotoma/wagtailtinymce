@@ -21,4 +21,5 @@ This package includes TinyMCE which is licensed under the LGPLv2.
 Icons for TinyMCE are generated and provided by the http://icomoon.io
 service.
 
-The Document icon is from FontAweome 4.3.0.
+The Document icon is from Wagtail's own icon font which is generated
+and provided by the http://icomoon.ico service.

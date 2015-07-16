@@ -1,0 +1,18 @@
+/* Cribbed from wagtail/wagtailadmin/static_src/wagtailadmin/scss/components/icons.scss */
+.mce-i-doc-full:before, .mce-i-doc-full:after {
+    font-family: "wagtail";
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none !important;
+    text-decoration: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align:left;
+}
+.mce-i-doc-full:after {
+    text-align:right;
+}
+.mce-i-doc-full:before {
+    content: "h";
+}

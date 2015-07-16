@@ -7,7 +7,7 @@ Wagtail TinyMCE offers integration of the
 
 This currently relies on a `pull-request`_ to Wagtail being accepted.
 
-.. _`pull-request`: https://github.com/torchbox/wagtail/pull/TBC
+.. _`pull-request`: https://github.com/torchbox/wagtail/pull/1521
 
 Versioning
 ----------

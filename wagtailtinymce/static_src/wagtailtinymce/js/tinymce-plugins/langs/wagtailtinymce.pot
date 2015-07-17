@@ -1,0 +1,9 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: wagtailtinymce-4.1.2.0\n"
+
+msgid "Insert/edit media"
+msgstr "Insert/edit media"
+
+msgid "Documents"
+msgstr "Documents"

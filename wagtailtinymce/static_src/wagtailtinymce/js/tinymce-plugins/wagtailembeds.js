@@ -2,6 +2,7 @@
     'use strict';
 
     (function($) {
+        tinymce.PluginManager.requireLangPack('wagtailembeds', mceOptions.language);
         tinymce.PluginManager.add('wagtailembeds', function(editor) {
 
             function showDialog() {
@@ -17,12 +18,6 @@
                             var elem;
 
                             elem = $(embedData).get(0);
-                            // Don't allow resizing of embedded preview
-                            $(elem).find('table, img, div').each(function() {
-                                $(this).attr('data-mce-resize', 'false');
-                                $(this).attr('data-mce-editable', 'false');
-                            });
-
                             editor.undoManager.transact(function() {
                                 lastSelection.setNode(elem);
                                 if (elem.getAttribute('contenteditable') === 'false') {

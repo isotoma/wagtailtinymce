@@ -2,6 +2,7 @@
     'use strict';
 
     (function($) {
+        tinymce.PluginManager.requireLangPack('wagtailimage', mceOptions.language);
         tinymce.PluginManager.add('wagtailimage', function(editor) {
 
             function showDialog() {

@@ -1,13 +1,18 @@
 'use strict';
 
-var mcePlugins = ['hr', 'wagtaillink'],
+var mcePlugins = ['hr'],
+    mceExternalPlugins = {},
     mceButtons = [
         'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link'
         ],
     mceOptions = {};
 
-function registerMCEPlugin(name) {
-    mcePlugins.push(name);
+function registerMCEPlugin(name, path) {
+    if (path) {
+        mceExternalPlugins[name] = path;
+    } else {
+        mcePlugins.push(name);
+    }
 }
 
 function registerMCEButton(name, row) {
@@ -21,7 +26,6 @@ function setMCEOption(name, value) {
     mceOptions[name] = value;
 }
 
-
 function makeRichTextEditable(id, options) {
 
     options = options || {};
@@ -29,6 +33,7 @@ function makeRichTextEditable(id, options) {
     $.extend(options, {
         selector:'#' + id.toString(),
         plugins: mcePlugins,
+        external_plugins: mceExternalPlugins,
         toolbar: mceButtons
         });
 

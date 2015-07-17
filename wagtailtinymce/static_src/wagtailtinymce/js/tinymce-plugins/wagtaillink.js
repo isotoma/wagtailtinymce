@@ -1,5 +1,6 @@
 (function() {
     (function($) {
+        tinymce.PluginManager.requireLangPack('wagtaillink', mceOptions.language);
         tinymce.PluginManager.add('wagtaillink', function(editor) {
             var getEnclosingLink = function() {
                 var node;

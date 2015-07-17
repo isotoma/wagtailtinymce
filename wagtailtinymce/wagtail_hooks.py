@@ -1,8 +1,19 @@
+import json
+import os.path
+
 from django.templatetags.static import static
-from django.utils.html import format_html, format_html_join
+from django.utils.html import escape
+from django.utils.html import format_html
+from django.utils.html import format_html_join
+from django.utils.safestring import mark_safe
+from django.utils import translation
 
 from wagtail.wagtailadmin.templatetags.wagtailadmin_tags import hook_output
 from wagtail.wagtailcore import hooks
+
+
+def to_js_primitive(string):
+    return mark_safe(json.dumps(escape(string)))
 
 
 @hooks.register('insert_editor_css')
@@ -22,7 +33,6 @@ def insert_editor_css():
 def insert_editor_js():
     js_files = [
         'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',
-        'wagtailtinymce/js/tinymce-plugins/tinymce-wagtaillink.js',
         'wagtailtinymce/js/rich-text-editor.js',
     ]
     js_includes = format_html_join(
@@ -30,59 +40,52 @@ def insert_editor_js():
         '<script src="{0}"></script>',
         ((static(filename),) for filename in js_files)
         )
-    return js_includes + hook_output('insert_tinymce_js')
+    base_settings = format_html(
+        '<script>'
+        'setMCEOption("language", {});'
+        'setMCEOption("language_load", true);'
+        'registerMCEPlugin("wagtaillink", {});'
+        '</script>',
+        to_js_primitive(translation.to_locale(translation.get_language())),
+        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaillink.js')),
+        )
+    return js_includes + base_settings + hook_output('insert_tinymce_js')
 
 
 @hooks.register('insert_tinymce_js')
 def images_richtexteditor_js():
-    js_files = [
-        'wagtailtinymce/js/tinymce-plugins/tinymce-wagtailimage.js',
-    ]
-    js_includes = format_html_join(
-        '\n',
-        '<script src="{0}"></script>',
-        ((static(filename),) for filename in js_files)
-        )
-    return js_includes + format_html(
+    return format_html(
         """
         <script>
-            registerMCEPlugin('wagtailimage');
+            registerMCEPlugin("wagtailimage", {});
             registerMCEButton('wagtailimage');
         </script>
         """,
+        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailimage.js')),
     )
 
 
 @hooks.register('insert_tinymce_js')
 def embeds_richtexteditor_js():
     return format_html(
-        '<script src="{0}"></script>'
         '<script>'
         'registerMCEPlugin("noneditable");'
         'setMCEOption("noneditable_leave_contenteditable", true);'
-        'registerMCEPlugin("wagtailembeds");'
+        'registerMCEPlugin("wagtailembeds", {});'
         'registerMCEButton("wagtailembeds");'
         '</script>',
-        static('wagtailtinymce/js/tinymce-plugins/tinymce-wagtailembeds.js'),
+        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailembeds.js')),
         )
 
 
 @hooks.register('insert_tinymce_js')
 def docs_richtexteditor_js():
-    js_files = [
-        'wagtailtinymce/js/tinymce-plugins/tinymce-wagtaildoclink.js',
-    ]
-    js_includes = format_html_join(
-        '\n',
-        '<script src="{0}"></script>',
-        ((static(filename),) for filename in js_files)
-        )
     return format_html(
         """
         <script>
-            registerMCEPlugin('wagtaildoclink');
+            registerMCEPlugin("wagtaildoclink", {});
             registerMCEButton('wagtaildoclink');
         </script>
         """,
-        static('wagtailtinymce/images/icon-document.png')
-    ) + js_includes
+        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaildoclink.js'))
+    )

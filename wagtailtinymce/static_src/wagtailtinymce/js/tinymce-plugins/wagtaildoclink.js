@@ -3,6 +3,7 @@
 
     (function($) {
 
+        tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
         tinymce.PluginManager.add('wagtaildoclink', function(editor) {
             function showDialog() {
                 var lastSelection, text;

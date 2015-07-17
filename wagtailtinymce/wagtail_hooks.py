@@ -59,6 +59,7 @@ def embeds_richtexteditor_js():
         '<script src="{0}"></script>'
         '<script>'
         'registerMCEPlugin("noneditable");'
+        'setMCEOption("noneditable_leave_contenteditable", true);'
         'registerMCEPlugin("wagtailembeds");'
         'registerMCEButton("wagtailembeds");'
         '</script>',

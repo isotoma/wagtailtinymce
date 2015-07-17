@@ -21,7 +21,7 @@ def insert_editor_css():
 @hooks.register('insert_editor_js')
 def insert_editor_js():
     js_files = [
-        'wagtailtinymce/js/vendor/tinymce/tinymce.min.js',
+        'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',
         'wagtailtinymce/js/tinymce-plugins/tinymce-wagtaillink.js',
         'wagtailtinymce/js/rich-text-editor.js',
     ]

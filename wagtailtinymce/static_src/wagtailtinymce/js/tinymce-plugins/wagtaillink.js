@@ -26,161 +26,65 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 (function() {
-    (function($) {
-        tinymce.PluginManager.requireLangPack('wagtaillink', mceOptions.language);
-        tinymce.PluginManager.add('wagtaillink', function(editor) {
-            var getEnclosingLink = function() {
-                var node;
 
-                node = editor.selection.commonAncestorContainer;
-                return $(node).parents('a').get(0);
-            };
+    function getEnclosingLink(editor) {
+        var node;
 
-            function showDialog() {
-                var button;
+        node = editor.selection.getNode();
+        return node.tagName === 'A' ? node : $(node).parents('a').get(0);
+    }
 
-                var enclosingLink, lastSelection, url;
+    function isOnlyTextSelected(anchorElm, selection) {
+        var html = selection.getContent();
 
-                enclosingLink = getEnclosingLink();
-                if (enclosingLink) {
-                    // unlink
-                    editor.execCommand('unlink');
-                } else {
-                    lastSelection = editor.selection;
-                    if (lastSelection.getRng().collapsed) {
-                        url = window.chooserUrls.pageChooser + '?allow_external_link=true&allow_email_link=true&prompt_for_link_text=true';
-                    } else {
-                        url = window.chooserUrls.pageChooser + '?allow_external_link=true&allow_email_link=true';
-                    }
+        // Partial html and not a fully selected anchor element
+        if (/</.test(html) && (!/^<a [^>]+>[^<]+<\/a>$/.test(html) || html.indexOf('href=') == -1)) {
+            return false;
+        }
 
-                    function isOnlyTextSelected(anchorElm) {
-                        var html = lastSelection.getContent();
+        if (anchorElm) {
+            var nodes = anchorElm.childNodes, i;
 
-                        // Partial html and not a fully selected anchor element
-                        if (/</.test(html) && (!/^<a [^>]+>[^<]+<\/a>$/.test(html) || html.indexOf('href=') == -1)) {
-                            return false;
-                        }
-
-                        if (anchorElm) {
-                            var nodes = anchorElm.childNodes, i;
-
-                            if (nodes.length === 0) {
-                                return false;
-                            }
-
-                            for (i = nodes.length - 1; i >= 0; i--) {
-                                if (nodes[i].nodeType != 3) {
-                                    return false;
-                                }
-                            }
-                        }
-
-                        return true;
-                    }
-
-                    selectedElm = lastSelection.getNode();
-                    anchorElm = editor.dom.getParent(selectedElm, 'a[href]');
-                    onlyText = isOnlyTextSelected(anchorElm);
-                    text = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : lastSelection.getContent({format: 'text'});
-                    href = anchorElm ? editor.dom.getAttrib(anchorElm, 'href') : '';
-
-                    ModalWorkflow({
-                        url: url,
-                        responses: {
-                            pageChosen: function(pageData) {
-                                var a;
-
-                                href = pageData.url;
-
-                                // Delay confirm since onSubmit will move focus
-                                function delayedConfirm(message, callback) {
-                                    var rng = editor.selection.getRng();
-
-                                    window.setTimeout(function() {
-                                        editor.windowManager.confirm(message, function(state) {
-                                            editor.selection.setRng(rng);
-                                            callback(state);
-                                        });
-                                    }, 0);
-                                }
-
-                                function insertLink() {
-                                    var linkAttrs = {
-                                        href: href,
-                                        title: (
-                                            pageData.title
-                                                ? (pageData.title === href && text.length ? text : pageData.title)
-                                                : text
-                                            )
-                                    };
-
-                                    if (anchorElm) {
-                                        editor.focus();
-
-                                        editor.dom.setAttribs(anchorElm, linkAttrs);
-                                        editor.dom.setHTML(anchorElm, editor.dom.encode(linkAttrs.title));
-
-                                        editor.selection.setNode(anchorElm);
-                                        editor.undoManager.add();
-                                    } else {
-                                        if (onlyText) {
-                                            editor.insertContent(editor.dom.createHTML('a', linkAttrs, editor.dom.encode(linkAttrs.title)));
-                                        } else {
-                                            editor.execCommand('mceInsertLink', false, linkAttrs);
-                                        }
-                                    }
-                                }
-
-                                if (!href) {
-                                    editor.execCommand('unlink');
-                                    return;
-                                }
-
-                                // Is email and not //user@domain.com
-                                if (href.indexOf('@') > 0 && href.indexOf('//') == -1 && href.indexOf('mailto:') == -1) {
-                                    delayedConfirm(
-                                        'The URL you entered seems to be an email address. Do you want to add the required mailto: prefix?',
-                                        function(state) {
-                                            if (state) {
-                                                href = 'mailto:' + href;
-                                            }
-
-                                            insertLink();
-                                        }
-                                    );
-
-                                    return;
-                                }
-
-                                // Is not protocol prefixed
-                                if ((editor.settings.link_assume_external_targets && !/^\w+:/i.test(href)) ||
-                                    (!editor.settings.link_assume_external_targets && /^\s*www\./i.test(href))) {
-                                    delayedConfirm(
-                                        'The URL you entered seems to be an external link. Do you want to add the required http:// prefix?',
-                                        function(state) {
-                                            if (state) {
-                                                href = 'http://' + href;
-                                            }
-
-                                            insertLink();
-                                        }
-                                    );
-
-                                    return;
-                                }
-
-                                insertLink();
-                            }
-                        }
-                    });
-                }
+            if (nodes.length === 0) {
+                return false;
             }
 
+            for (i = nodes.length - 1; i >= 0; i--) {
+                if (nodes[i].nodeType != 3) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Delay confirm since onSubmit will move focus
+    function delayedConfirm(editor, message, callback) {
+        var rng = editor.selection.getRng();
+
+        window.setTimeout(function() {
+            editor.windowManager.confirm(message, function(state) {
+                editor.selection.setRng(rng);
+                callback(state);
+            });
+        }, 0);
+    }
+
+    function LinkPlugin(editor) {
+        this.editor = editor;
+        this.hook();
+    }
+
+    $.extend(LinkPlugin.prototype, {
+        responseType: 'pageChosen',
+        hook: function () {
+            var editor = this.editor, self = this;
             editor.addButton('link', {
                 icon: 'link',
                 tooltip: 'Insert/edit link',
                 shortcut: 'Meta+K',
-                onclick: showDialog,
+                onclick: function() { return self.showDialog(); },
                 stateSelector: 'a[data-linktype=page],a[href]:not([data-linktype])'
             });
 
@@ -195,16 +99,133 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 icon: 'link',
                 text: 'Insert/edit link',
                 shortcut: 'Meta+K',
-                onclick: showDialog,
+                onclick: function() { return self.showDialog(); },
                 stateSelector: 'a[data-linktype=page],a[href]:not([data-linktype])',
                 context: 'insert',
                 prependToContext: true
             });
 
-            editor.addShortcut('Meta+K', '', showDialog);
-            editor.addCommand('mceLink', showDialog);
+            editor.addShortcut('Meta+K', '', function() { return self.showDialog(); });
+            editor.addCommand('mceLink', function() { return self.showDialog(); });
+        },
+        getChooserUrl: function () {
+            var lastSelection = this.editor.selection;
+            if (lastSelection.getRng().collapsed) {
+                url = window.chooserUrls.pageChooser + '?allow_external_link=true&allow_email_link=true&prompt_for_link_text=true';
+            } else {
+                url = window.chooserUrls.pageChooser + '?allow_external_link=true&allow_email_link=true';
+            }
+            return url;
+        },
+        showDialog: function () {
+            var button, enclosingLink, lastSelection, url, href, text, anchorElm, selectedElm,
+                self=this, editor=this.editor,
+                responseHandlers = {};
 
-        });
+            responseHandlers[self.responseType] = function(pageData) {
+                return self.itemChosen(editor, anchorElm, text, pageData);
+            };
+            lastSelection = editor.selection;
+            enclosingLink = getEnclosingLink(editor);
+            if (enclosingLink) {
+                // unlink
+                editor.execCommand('unlink');
+            } else {
+                url = this.getChooserUrl();
+
+                selectedElm = lastSelection.getNode();
+                anchorElm = editor.dom.getParent(selectedElm, 'a[href]');
+                text = anchorElm ? (anchorElm.innerText || anchorElm.textContent) : lastSelection.getContent({format: 'text'});
+                href = anchorElm ? editor.dom.getAttrib(anchorElm, 'href') : '';
+
+                ModalWorkflow({
+                    url: url,
+                    responses: responseHandlers
+                });
+            }
+        },
+        getLinkAttrs: function (pageData, text) {
+            var href = pageData.url,
+                title = (
+                    pageData.title
+                    ? (pageData.title === href && text.length ? text : pageData.title)
+                    : text
+                );
+            return {
+                href: href,
+                title: title
+            };
+        },
+        itemChosen: function (editor, anchorElm, text, pageData) {
+            var a,
+                linkAttrs = this.getLinkAttrs(pageData, text),
+                href = linkAttrs.href,
+                self = this;
+
+            if (!href) {
+                editor.execCommand('unlink');
+                return;
+            }
+
+            // Is email and not //user@domain.com
+            if (href.indexOf('@') > 0 && href.indexOf('//') == -1 && href.indexOf('mailto:') == -1) {
+                delayedConfirm(
+                    editor,
+                    'The URL you entered seems to be an email address. Do you want to add the required mailto: prefix?',
+                    function(state) {
+                        if (state) {
+                            linkAttrs.href = 'mailto:' + linkAttrs.href;
+                        }
+
+                        self.insertLink(editor, anchorElm, linkAttrs);
+                    }
+                );
+
+                return;
+            }
+
+            // Is not protocol prefixed
+            if ((editor.settings.link_assume_external_targets && !/^\w+:/i.test(href)) ||
+                (!editor.settings.link_assume_external_targets && /^\s*www\./i.test(href))) {
+                delayedConfirm(
+                    editor,
+                    'The URL you entered seems to be an external link. Do you want to add the required http:// prefix?',
+                    function(state) {
+                        if (state) {
+                            linkAttrs.href = 'http://' + linkAttrs.href;
+                        }
+
+                        self.insertLink(editor, anchorElm, linkAttrs);
+                    }
+                );
+
+                return;
+            }
+
+            this.insertLink(editor, anchorElm, linkAttrs);
+        },
+        insertLink: function (editor, anchorElm, linkAttrs) {
+            if (anchorElm) {
+                editor.focus();
+
+                editor.dom.setAttribs(anchorElm, linkAttrs);
+                editor.dom.setHTML(anchorElm, editor.dom.encode(linkAttrs.title));
+
+                editor.selection.setNode(anchorElm);
+                editor.undoManager.add();
+            } else {
+                if (isOnlyTextSelected(anchorElm, editor.selection)) {
+                    editor.insertContent(editor.dom.createHTML('a', linkAttrs, editor.dom.encode(linkAttrs.title)));
+                } else {
+                    editor.execCommand('mceInsertLink', false, linkAttrs);
+                }
+            }
+        }
+    });
+
+    (function($) {
+        tinymce.PluginManager.requireLangPack('wagtaillink', mceOptions.language);
+        tinymce.PluginManager.add('wagtaillink', LinkPlugin);
     })(jQuery);
 
 }).call(this);

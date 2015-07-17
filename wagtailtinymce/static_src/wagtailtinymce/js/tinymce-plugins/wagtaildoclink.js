@@ -31,53 +31,53 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (function($) {
 
         tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
-        tinymce.PluginManager.add('wagtaildoclink', function(editor) {
-            function showDialog() {
-                var lastSelection, text;
+        var linkPlugin = tinymce.PluginManager.get('wagtaillink');
 
-                lastSelection = editor.selection;
-                text = lastSelection.getContent({format: 'text'});
-
-                ModalWorkflow({
-                    url: window.chooserUrls.documentChooser,
-                    responses: {
-                        documentChosen: function(docData) {
-                            var a;
-
-                            editor.undoManager.transact(function() {
-                                a = document.createElement('a');
-                                a.setAttribute('href', docData.url);
-                                a.setAttribute('data-id', docData.id);
-                                a.setAttribute('data-linktype', 'document');
-                                if ((!lastSelection.getRng().collapsed) && lastSelection.canSurroundContents()) {
-                                    lastSelection.surroundContents(a);
-                                } else {
-                                    a.appendChild(document.createTextNode(docData.title));
-                                    lastSelection.setContent(a);
-                                }
-                            });
-                        }
-                    }
+        function DocLinkPlugin(editor) {
+            this.editor = editor;
+            this.hook();
+        }
+        $.extend(DocLinkPlugin.prototype, linkPlugin.prototype, {
+            responseType: 'documentChosen',
+            hook: function() {
+                var self = this;
+                this.editor.addButton('wagtaildoclink', {
+                    icon: 'doc-full',
+                    tooltip: 'Documents',
+                    onclick: function () { return self.showDialog(); },
+                    stateSelector: 'a[data-linktype=document]'
                 });
+
+                this.editor.addMenuItem('wagtaildoclink', {
+                    icon: 'doc-full',
+                    text: 'Documents',
+                    onclick: function () { return self.showDialog(); },
+                    context: 'insert',
+                    prependToContext: true
+                });
+
+                this.editor.addCommand('mceWagtailDocuments', function () { return self.showDialog(); });
+            },
+            getChooserUrl: function () {
+                return window.chooserUrls.documentChooser;
+            },
+            getLinkAttrs: function (docData, text) {
+                var href = docData.url || docData.edit_link,
+                    title = (
+                        docData.title
+                        ? (docData.title === href && text.length ? text : docData.title)
+                        : text
+                    );
+                return {
+                    href: href,
+                    title: title,
+                    'data-id': docData.id,
+                    'data-linktype': 'document'
+                };
             }
-
-            editor.addButton('wagtaildoclink', {
-                icon: 'doc-full',
-                tooltip: 'Documents',
-                onclick: showDialog,
-                stateSelector: 'a[data-linktype=document]'
-            });
-
-            editor.addMenuItem('wagtaildoclink', {
-                icon: 'doc-full',
-                text: 'Documents',
-                onclick: showDialog,
-                context: 'insert',
-                prependToContext: true
-            });
-
-            editor.addCommand('mceWagtailDocuments', showDialog);
         });
+
+        tinymce.PluginManager.add('wagtaildoclink', DocLinkPlugin);
     })(jQuery);
 
 }).call(this);

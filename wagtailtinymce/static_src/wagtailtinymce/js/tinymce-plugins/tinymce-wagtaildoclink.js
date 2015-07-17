@@ -5,7 +5,7 @@
 
         tinymce.PluginManager.add('wagtaildoclink', function(editor) {
             function showDialog() {
-                var lastSelection;
+                var lastSelection, text;
 
                 lastSelection = editor.selection;
                 text = lastSelection.getContent({format: 'text'});
@@ -25,7 +25,7 @@
                                     lastSelection.surroundContents(a);
                                 } else {
                                     a.appendChild(document.createTextNode(docData.title));
-                                    lastSelection.insertNode(a);
+                                    lastSelection.setContent(a);
                                 }
                             });
                         }

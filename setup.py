@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 
-import sys
-
-from setuptools.command.sdist import sdist
+import codecs
 
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
+
+
+def read(filename):
+    try:
+        return unicode(codecs.open(filename, encoding='utf-8').read())
+    except NameError:
+        return open(filename, 'r', encoding='utf-8').read()
 
 
 install_requires = [
@@ -24,13 +29,14 @@ setup(
     url='https://github.com/isotoma/wagtailtinymce.git',
     packages=find_packages(),
     include_package_data=True,
-    license='LGPL',
-    long_description=open('README.rst').read(),
+    license='New BSD',
+    long_description='\n\n'.join([read('README.rst'), read('CHANGELOG.rst'),
+                                  read('LICENSE.rst')]),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',

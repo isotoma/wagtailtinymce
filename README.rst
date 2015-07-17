@@ -1,3 +1,4 @@
+===============
 Wagtail TinyMCE
 ===============
 
@@ -10,16 +11,6 @@ This currently relies on a `pull-request`_ to Wagtail being accepted.
 .. _`pull-request`: https://github.com/torchbox/wagtail/pull/1521
 
 Versioning
-----------
+==========
 The version number of this package is the TinyMCE version, followed by
 the release number of this package for that TinyMCE version.
-
-License & attribution
----------------------
-This package includes TinyMCE which is licensed under the LGPLv2.
-
-Icons for TinyMCE are generated and provided by the http://icomoon.io
-service.
-
-The Document icon is from Wagtail's own icon font which is generated
-and provided by the http://icomoon.ico service.

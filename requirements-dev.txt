@@ -1,0 +1,6 @@
+wagtail
+Django
+
+# For translations
+polib
+transifex-client

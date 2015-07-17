@@ -1,0 +1,10 @@
+recursive-exclude scripts *
+recursive-exclude wagtailtinymce *.pot
+recursive-include wagtailtinymce *.js
+recursive-include wagtailtinymce *.css
+recursive-include wagtailtinymce *.eot
+recursive-include wagtailtinymce *.svg
+recursive-include wagtailtinymce *.ttf
+recursive-include wagtailtinymce *.woff
+recursive-include wagtailtinymce *.txt
+include *.rst

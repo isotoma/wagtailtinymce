@@ -81,6 +81,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 });
             }
 
+            /* this is kind of a workaround for a bug in TinyMCE */
+            editor.on('SetContent', function (e) {
+                $(editor.getBody()).find('[data-mce-contenteditable],.embed-placeholder').each(function () {
+                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
+                });
+            });
         });
     })(jQuery);
 

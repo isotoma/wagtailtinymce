@@ -4,3 +4,6 @@ Django
 # For translations
 polib
 transifex-client
+
+# release
+zest.releaser[recommended]

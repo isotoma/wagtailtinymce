@@ -65,6 +65,12 @@ Similarly you can register buttons for the TinyMCE toolbar:
 
     registerMCEButton(name);
 
+Tools:
+
+.. code-block:: javascript
+
+    registerMCETool(name);
+
 and set configuration options:
 
 .. code-block:: javascript

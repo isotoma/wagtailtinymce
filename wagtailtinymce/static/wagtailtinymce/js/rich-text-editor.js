@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 var mcePlugins = ['hr'],
     mceExternalPlugins = {},
+    mceTools = [],
     mceButtons = [
         'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link'
         ],
@@ -40,6 +41,10 @@ function registerMCEPlugin(name, path) {
     } else {
         mcePlugins.push(name);
     }
+}
+
+function registerMCETool(name) {
+    mceTools.push(name);
 }
 
 function registerMCEButton(name, row) {
@@ -60,6 +65,7 @@ function makeRichTextEditable(id, options) {
     $.extend(options, {
         selector:'#' + id.toString(),
         plugins: mcePlugins,
+        tools: mceTools,
         external_plugins: mceExternalPlugins,
         toolbar: mceButtons
         });

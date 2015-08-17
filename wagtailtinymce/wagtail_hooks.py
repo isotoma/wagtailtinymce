@@ -56,6 +56,17 @@ def insert_editor_css():
 
 @hooks.register('insert_editor_js')
 def insert_editor_js():
+    preload_settings = format_html(
+        '<script>'
+        '(function() {{'
+        '    "use strict";'
+        '    window.tinymce = window.tinymce || {{}};'
+        '    window.tinymce.base = window.tinymce.baseURL = {};'
+        '    window.tinymce.suffix = "";'
+        '}}());'
+        '</script>',
+        to_js_primitive(static('wagtailtinymce/js/vendor/tinymce')),
+        )
     js_files = [
         'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',
         'wagtailtinymce/js/rich-text-editor.js',
@@ -74,7 +85,7 @@ def insert_editor_js():
         to_js_primitive(translation.to_locale(translation.get_language())),
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaillink.js')),
         )
-    return js_includes + base_settings + hook_output('insert_tinymce_js')
+    return preload_settings + js_includes + base_settings + hook_output('insert_tinymce_js')
 
 
 @hooks.register('insert_tinymce_js')

@@ -7,4 +7,5 @@ recursive-include wagtailtinymce *.svg
 recursive-include wagtailtinymce *.ttf
 recursive-include wagtailtinymce *.woff
 recursive-include wagtailtinymce *.txt
+recursive-include wagtailtinymce *.jpg
 include *.rst

@@ -15,10 +15,13 @@ Installation
 ============
 
 Add ``wagtailtinymce`` to your |INSTALLED_APPS Django setting|_ and
-remove ``wagtail.wagtailhalloeditor``.
+optionally remove ``wagtail.wagtailhalloeditor``.
 
 .. |INSTALLED_APPS Django setting| replace:: ``INSTALLED_APPS`` Django setting
 .. _`INSTALLED_APPS Django setting`: https://docs.djangoproject.com/en/1.8/ref/settings/#installed-apps
+
+Add or change ``WAGTAIL_DEFAULT_RICH_TEXT_EDITOR`` in your settings,
+setting it to ``wagtailtinymce.editor.TinyMCEEditor``.
 
 Customization
 =============

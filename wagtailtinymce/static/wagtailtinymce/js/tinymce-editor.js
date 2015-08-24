@@ -58,7 +58,7 @@ function setMCEOption(name, value) {
     mceOptions[name] = value;
 }
 
-function makeRichTextEditable(id, options) {
+function makeTinyMCEEditable(id, options) {
 
     options = options || {};
     $.extend(options, mceOptions);

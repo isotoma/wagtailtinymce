@@ -151,10 +151,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     ? (pageData.title === href && text.length ? text : pageData.title)
                     : text
                 );
-            return {
+            var attrs = {
                 href: href,
                 title: title
             };
+            if (pageData.id) {
+                attrs['data-id'] = pageData.id;
+                attrs['data-linktype'] = 'page';
+            }
+            return attrs;
         },
         itemChosen: function (editor, anchorElm, text, pageData) {
             var a,

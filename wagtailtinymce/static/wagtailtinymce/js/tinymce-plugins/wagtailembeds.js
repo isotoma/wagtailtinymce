@@ -60,7 +60,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 icon: 'media',
                 tooltip: 'Insert/edit media',
                 onclick: showDialog,
-                stateSelector: ['.embed-placeholder, .embed-placeholder *']
+                stateSelector: ['[data-embedtype=media]']
             });
 
             editor.addMenuItem('wagtailembeds', {

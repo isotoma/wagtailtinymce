@@ -62,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 icon: 'image',
                 tooltip: 'Insert/edit image',
                 onclick: showDialog,
-                stateSelector: 'img,[data-embedtype=image]'
+                stateSelector: '[data-embedtype=image]'
             });
 
             editor.addMenuItem('wagtailimage', {

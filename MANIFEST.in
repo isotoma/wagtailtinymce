@@ -8,4 +8,5 @@ recursive-include wagtailtinymce *.ttf
 recursive-include wagtailtinymce *.woff
 recursive-include wagtailtinymce *.txt
 recursive-include wagtailtinymce *.jpg
+recursive-include wagtailtinymce *.gif
 include *.rst

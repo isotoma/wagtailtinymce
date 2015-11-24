@@ -26,6 +26,7 @@
 
 import json
 
+from django.core.urlresolvers import reverse
 from django.templatetags.static import static
 from django.utils.html import escape
 from django.utils.html import format_html
@@ -95,9 +96,11 @@ def images_richtexteditor_js():
         <script>
             registerMCEPlugin("wagtailimage", {});
             registerMCEButton('wagtailimage');
+            window.chooserUrls.imageChooserSelectFormat = {};
         </script>
         """,
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailimage.js')),
+        to_js_primitive(reverse('wagtailimages:chooser_select_format', args=['00000000']))
     )
 
 

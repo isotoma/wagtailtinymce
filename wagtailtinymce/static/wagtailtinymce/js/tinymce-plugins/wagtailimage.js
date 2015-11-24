@@ -32,26 +32,60 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         tinymce.PluginManager.requireLangPack('wagtailimage', mceOptions.language);
         tinymce.PluginManager.add('wagtailimage', function(editor) {
 
-            function showDialog() {
-                var insertionPoint, lastSelection;
+            /* stop editing and resizing of embedded image content */
+            function fixContent() {
+                $(editor.getBody()).find('[data-embedtype=image]').each(function () {
+                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
+                });
+            }
 
-                lastSelection = editor.selection;
-                insertionPoint = $(lastSelection.endContainer).parentsUntil('.richtext').last();
+            function showDialog() {
+                var addUrl, mceSelection, $currentNode, $targetNode, addMethod;
+
+                mceSelection = editor.selection;
+                $currentNode = $(mceSelection.getEnd());
+                // target selected image (if any)
+                $targetNode = $currentNode.closest('[data-embedtype=image]');
+                if ($targetNode.length) {
+                    addUrl = window.chooserUrls.imageChooserSelectFormat;
+                    addUrl = addUrl.replace('00000000', $targetNode.data('id'));
+                    addUrl += addUrl.indexOf('?') > -1 ? '&' : '?';
+                    addUrl += $.param({
+                        edit: 1,
+                        format: $targetNode.data('format'),
+                        alt_text: $targetNode.data('alt'),
+                        caption: $targetNode.data('caption')
+                    });
+                    // select and replace target
+                    addMethod = function(elem) {
+                        mceSelection.select($targetNode.get(0));
+                        mceSelection.setNode(elem);
+                    };
+                } 
+                else {
+                    addUrl = window.chooserUrls.imageChooser + '?select_format=true';
+                    // otherwise target immediate child of nearest div container
+                    $targetNode = $currentNode.parentsUntil('div:not([data-embedtype])').not('body,html').last();
+                    if (0 == $targetNode.length) {
+                        // otherwise target current node
+                        $targetNode = $currentNode;
+                    }
+                    // select and insert after target
+                    addMethod = function(elem) {
+                        $(elem).insertBefore($targetNode);
+                        mceSelection.select(elem);
+                    };
+                }
 
                 ModalWorkflow({
-                    url: window.chooserUrls.imageChooser + '?select_format=true',
+                    url: addUrl,
                     responses: {
                         imageChosen: function(imageData) {
-                            var elem;
-
-                            elem = $(imageData.html).get(0);
-
+                            var elem = $(imageData.html).get(0);
                             editor.undoManager.transact(function() {
                                 editor.focus();
-                                editor.selection.setNode(elem);
-                                if (elem.getAttribute('contenteditable') === 'false') {
-                                    insertRichTextDeleteControl(elem);
-                                }
+                                addMethod(elem);
+                                fixContent();
                             });
                         }
                     }
@@ -75,8 +109,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
             editor.addCommand('mceWagtailImage', showDialog);
 
+            editor.on('LoadContent', function (e) {
+                fixContent();
+            });
         });
-
     })(jQuery);
 
 }).call(this);

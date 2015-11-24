@@ -32,24 +32,57 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         tinymce.PluginManager.requireLangPack('wagtailembeds', mceOptions.language);
         tinymce.PluginManager.add('wagtailembeds', function(editor) {
 
-            function showDialog() {
-                var insertionPoint, lastSelection;
+            /* stop editing and resizing of embedded media content */
+            function fixContent() {
+                $(editor.getBody()).find('[data-embedtype=media]').each(function () {
+                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
+                });
+            }
 
-                lastSelection = editor.selection;
-                insertionPoint = $(lastSelection.endContainer).parentsUntil('.richtext').last();
+            function showDialog() {
+                var addUrl, mceSelection, $currentNode, $targetNode, addMethod;
+
+                addUrl = window.chooserUrls.embedsChooser;
+                mceSelection = editor.selection;
+                $currentNode = $(mceSelection.getEnd());
+                // target selected embed (if any)
+                $targetNode = $currentNode.closest('[data-embedtype=media]');
+                if ($targetNode.length) {
+                    addUrl += addUrl.indexOf('?') > -1 ? '&' : '?';
+                    addUrl += $.param({
+                        edit: 1,
+                        url: $targetNode.data('url'),
+                        caption: $targetNode.data('caption')
+                    });
+                    // select and replace target
+                    addMethod = function(elem) {
+                        mceSelection.select($targetNode.get(0));
+                        mceSelection.setNode(elem);
+                    };
+                } 
+                else {
+                    // otherwise target immediate child of nearest div container
+                    $targetNode = $currentNode.parentsUntil('div:not([data-embedtype])').not('body,html').last();
+                    if (0 == $targetNode.length) {
+                        // otherwise target current node
+                        $targetNode = $currentNode;
+                    }
+                    // select and insert after target
+                    addMethod = function(elem) {
+                        $(elem).insertBefore($targetNode);
+                        mceSelection.select(elem);
+                    };
+                }
 
                 ModalWorkflow({
-                    url: window.chooserUrls.embedsChooser,
+                    url: addUrl,
                     responses: {
                         embedChosen: function(embedData) {
-                            var elem;
-
-                            elem = $(embedData).get(0);
+                            var elem = $(embedData).get(0);
                             editor.undoManager.transact(function() {
-                                lastSelection.setNode(elem);
-                                if (elem.getAttribute('contenteditable') === 'false') {
-                                    insertRichTextDeleteControl(elem);
-                                }
+                                editor.focus();
+                                addMethod(elem);
+                                fixContent();
                             });
                         }
                     }
@@ -60,7 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 icon: 'media',
                 tooltip: 'Insert/edit media',
                 onclick: showDialog,
-                stateSelector: ['[data-embedtype=media]']
+                stateSelector: '[data-embedtype=media]'
             });
 
             editor.addMenuItem('wagtailembeds', {
@@ -73,19 +106,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
             editor.addCommand('mceWagtailEmbeds', showDialog);
 
-            if (editor && editor.plugins.contextmenu){
-                editor.plugins.contextmenu.onContextMenu.add(function(plugin, menu, element) {
-                    if (element.nodName === 'IMG' && element.hasAttribute('data-mce-src')) {
-                        menu.add({title: 'wagtailembeds', icon : 'media', cmd : 'mceWagtailEmbeds'});
-                    }
-                });
-            }
-
-            /* this is kind of a workaround for a bug in TinyMCE */
-            editor.on('SetContent', function (e) {
-                $(editor.getBody()).find('[data-mce-contenteditable],.embed-placeholder').each(function () {
-                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
-                });
+            editor.on('LoadContent', function (e) {
+                fixContent();
             });
         });
     })(jQuery);

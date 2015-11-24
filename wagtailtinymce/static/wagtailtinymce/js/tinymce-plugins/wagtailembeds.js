@@ -32,36 +32,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         tinymce.PluginManager.requireLangPack('wagtailembeds', mceOptions.language);
         tinymce.PluginManager.add('wagtailembeds', function(editor) {
 
+            /* stop editing and resizing of embedded media content */
+            function fixContent() {
+                $(editor.getBody()).find('[data-embedtype=media]').each(function () {
+                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
+                });
+            }
+
             function showDialog() {
-                var mceSelection, currentNode, targetNode, addMethod, addUrl;
+                var addUrl, mceSelection, $currentNode, $targetNode, addMethod;
 
                 addUrl = window.chooserUrls.embedsChooser;
                 mceSelection = editor.selection;
-                currentNode = mceSelection.getEnd();
+                $currentNode = $(mceSelection.getEnd());
                 // target selected embed (if any)
-                targetNode = $(currentNode).closest('[data-embedtype]').get(0);
-                if (targetNode) {
-                    // TODO cope with addUrl already having a ? on it
-                    addUrl += '?' + $.param({
-                        url: $(targetNode).data('url'),
-                        caption: $(targetNode).data('caption')
+                $targetNode = $currentNode.closest('[data-embedtype=media]');
+                if ($targetNode.length) {
+                    addUrl += addUrl.indexOf('?') > -1 ? '&' : '?';
+                    addUrl += $.param({
+                        edit: 1,
+                        url: $targetNode.data('url'),
+                        caption: $targetNode.data('caption')
                     });
                     // select and replace target
                     addMethod = function(elem) {
-                        mceSelection.select(targetNode);
+                        mceSelection.select($targetNode.get(0));
                         mceSelection.setNode(elem);
                     };
                 } 
                 else {
                     // otherwise target immediate child of nearest div container
-                    targetNode = $(currentNode).parentsUntil('div:not([data-embedtype])').not('body,html').last().get(0);
-                    if( undefined == targetNode ) {
+                    $targetNode = $currentNode.parentsUntil('div:not([data-embedtype])').not('body,html').last();
+                    if (0 == $targetNode.length) {
                         // otherwise target current node
-                        targetNode = currentNode;
+                        $targetNode = $currentNode;
                     }
                     // select and insert after target
                     addMethod = function(elem) {
-                        $(elem).insertAfter(targetNode);
+                        $(elem).insertBefore($targetNode);
                         mceSelection.select(elem);
                     };
                 }
@@ -72,7 +80,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         embedChosen: function(embedData) {
                             var elem = $(embedData).get(0);
                             editor.undoManager.transact(function() {
+                                editor.focus();
                                 addMethod(elem);
+                                fixContent();
                             });
                         }
                     }
@@ -96,11 +106,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
             editor.addCommand('mceWagtailEmbeds', showDialog);
 
-            /* prevent TinyMCE allowing resize of embed content */
-            editor.on('SetContent', function (e) {
-                $(editor.getBody()).find('[data-embedtype=media]').each(function () {
-                    $(this).attr('contenteditable', false).attr('data-mce-contenteditable', 'false').find('div,table,img').attr('data-mce-resize', 'false');
-                });
+            editor.on('LoadContent', function (e) {
+                fixContent();
             });
         });
     })(jQuery);

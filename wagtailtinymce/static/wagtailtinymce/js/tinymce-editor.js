@@ -33,7 +33,8 @@ var mcePlugins = ['hr'],
     mceButtons = [
         'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link'
         ],
-    mceOptions = {};
+    mceOptions = {},
+    mceShowMenu = false;
 
 function registerMCEPlugin(name, path) {
     if (path) {
@@ -54,8 +55,19 @@ function registerMCEButton(name, row) {
     mceButtons[row] += ' ' + (name);
 }
 
+function unregisterMCEButton(name, row) {
+    if (row === undefined) {
+        row = 0;
+    }
+    mceButtons[row] = mceButtons[row].replace(' ' + (name), '');
+}
+
 function setMCEOption(name, value) {
     mceOptions[name] = value;
+}
+
+function setMCEShowMenu(option) {
+    mceShowMenu = option;
 }
 
 function makeTinyMCEEditable(id, options) {
@@ -67,7 +79,8 @@ function makeTinyMCEEditable(id, options) {
         plugins: mcePlugins,
         tools: mceTools,
         external_plugins: mceExternalPlugins,
-        toolbar: mceButtons
+        toolbar: mceButtons,
+        menubar: mceShowMenu,
         });
 
     tinymce.init(options);

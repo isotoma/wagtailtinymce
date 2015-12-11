@@ -31,53 +31,66 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (function($) {
 
         tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
-        var linkPlugin = tinymce.PluginManager.get('wagtaillink');
 
-        function DocLinkPlugin(editor) {
-            this.editor = editor;
-            this.hook();
-        }
-        $.extend(DocLinkPlugin.prototype, linkPlugin.prototype, {
-            responseType: 'documentChosen',
-            hook: function() {
-                var self = this;
-                this.editor.addButton('wagtaildoclink', {
-                    icon: 'doc-full',
-                    tooltip: 'Documents',
-                    onclick: function () { return self.showDialog(); },
-                    stateSelector: 'a[data-linktype=document]'
-                });
+        var linkPlugin;
 
-                this.editor.addMenuItem('wagtaildoclink', {
-                    icon: 'doc-full',
-                    text: 'Documents',
-                    onclick: function () { return self.showDialog(); },
-                    context: 'insert',
-                    prependToContext: true
-                });
-
-                this.editor.addCommand('mceWagtailDocuments', function () { return self.showDialog(); });
-            },
-            getChooserUrl: function () {
-                return window.chooserUrls.documentChooser;
-            },
-            getLinkAttrs: function (docData, text) {
-                var href = docData.url || docData.edit_link,
-                    title = (
-                        docData.title
-                        ? (docData.title === href && text.length ? text : docData.title)
-                        : text
-                    );
-                return {
-                    href: href,
-                    title: title,
-                    'data-id': docData.id,
-                    'data-linktype': 'document'
-                };
+        function getDependencies() {
+            linkPlugin = tinymce.PluginManager.get('wagtaillink');
+            if (linkPlugin === undefined) {
+                setTimeout(getDependencies, 100)
+            } else {
+                addPlugin()
             }
-        });
+        }
+        getDependencies();
 
-        tinymce.PluginManager.add('wagtaildoclink', DocLinkPlugin);
+        function addPlugin() {
+            function DocLinkPlugin(editor) {
+                this.editor = editor;
+                this.hook();
+            }
+            $.extend(DocLinkPlugin.prototype, linkPlugin.prototype, {
+                responseType: 'documentChosen',
+                hook: function() {
+                    var self = this;
+                    this.editor.addButton('wagtaildoclink', {
+                        icon: 'doc-full',
+                        tooltip: 'Documents',
+                        onclick: function () { return self.showDialog(); },
+                        stateSelector: 'a[data-linktype=document]'
+                    });
+
+                    this.editor.addMenuItem('wagtaildoclink', {
+                        icon: 'doc-full',
+                        text: 'Documents',
+                        onclick: function () { return self.showDialog(); },
+                        context: 'insert',
+                        prependToContext: true
+                    });
+
+                    this.editor.addCommand('mceWagtailDocuments', function () { return self.showDialog(); });
+                },
+                getChooserUrl: function () {
+                    return window.chooserUrls.documentChooser;
+                },
+                getLinkAttrs: function (docData, text) {
+                    var href = docData.url || docData.edit_link,
+                        title = (
+                            docData.title
+                            ? (docData.title === href && text.length ? text : docData.title)
+                            : text
+                        );
+                    return {
+                        href: href,
+                        title: title,
+                        'data-id': docData.id,
+                        'data-linktype': 'document'
+                    };
+                }
+            });
+
+            tinymce.PluginManager.add('wagtaildoclink', DocLinkPlugin);
+        }
     })(jQuery);
 
 }).call(this);

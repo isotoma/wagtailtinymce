@@ -34,7 +34,7 @@ var mcePlugins = ['hr'],
         'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link'
         ],
     mceOptions = {},
-    mceShowMenu = false;
+    mceMenubar = 'file edit insert view format table tools'
 
 function registerMCEPlugin(name, path) {
     if (path) {
@@ -66,8 +66,8 @@ function setMCEOption(name, value) {
     mceOptions[name] = value;
 }
 
-function setMCEShowMenu(option) {
-    mceShowMenu = option;
+function setMCEMenubar(option) {
+    mceMenubar = option;
 }
 
 function makeTinyMCEEditable(id, options) {
@@ -80,7 +80,7 @@ function makeTinyMCEEditable(id, options) {
         tools: mceTools,
         external_plugins: mceExternalPlugins,
         toolbar: mceButtons,
-        menubar: mceShowMenu,
+        menubar: mceMenubar,
         });
 
     tinymce.init(options);

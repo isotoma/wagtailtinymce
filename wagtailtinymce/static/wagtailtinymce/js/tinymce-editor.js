@@ -75,13 +75,18 @@ function makeTinyMCEEditable(id, options) {
     options = options || {};
     $.extend(options, mceOptions);
     $.extend(options, {
-        selector:'#' + id.toString(),
+        selector: '#' + id.toString(),
         plugins: mcePlugins,
         tools: mceTools,
         external_plugins: mceExternalPlugins,
         toolbar: mceButtons,
         menubar: mceMenubar,
-        });
+        setup: function (editor) {
+            editor.on('change', function () {
+                editor.save();
+            });
+        }
+    });
 
     tinymce.init(options);
 }

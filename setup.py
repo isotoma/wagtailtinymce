@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Isotoma Limited
+# Copyright (c) 2016, Isotoma Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Framework :: Django',
         'Topic :: Internet :: WWW/HTTP :: Site Management',
     ],

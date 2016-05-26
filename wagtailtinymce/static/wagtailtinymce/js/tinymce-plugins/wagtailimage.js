@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Isotoma Limited
+Copyright (c) 2016, Isotoma Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         mceSelection.select($targetNode.get(0));
                         mceSelection.setNode(elem);
                     };
-                } 
+                }
                 else {
                     addUrl = window.chooserUrls.imageChooser + '?select_format=true';
                     // otherwise target immediate child of nearest div container

@@ -1,7 +1,7 @@
 License
 =======
 
-This package is copyright (c) 2015, Isotoma Limited
+This package is copyright (c) 2016, Isotoma Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

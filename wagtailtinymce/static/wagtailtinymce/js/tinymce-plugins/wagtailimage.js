@@ -40,30 +40,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             }
 
             function showDialog() {
-                var addUrl, mceSelection, $currentNode, $targetNode, addMethod;
+                var url, urlParams, mceSelection, $currentNode, $targetNode, insertElement;
 
                 mceSelection = editor.selection;
                 $currentNode = $(mceSelection.getEnd());
                 // target selected image (if any)
                 $targetNode = $currentNode.closest('[data-embedtype=image]');
                 if ($targetNode.length) {
-                    addUrl = window.chooserUrls.imageChooserSelectFormat;
-                    addUrl = addUrl.replace('00000000', $targetNode.data('id'));
-                    addUrl += addUrl.indexOf('?') > -1 ? '&' : '?';
-                    addUrl += $.param({
+                    url = window.chooserUrls.imageChooserSelectFormat;
+                    url = url.replace('00000000', $targetNode.data('id'));
+                    urlParams = {
                         edit: 1,
                         format: $targetNode.data('format'),
                         alt_text: $targetNode.data('alt'),
                         caption: $targetNode.data('caption')
-                    });
+                    };
                     // select and replace target
-                    addMethod = function(elem) {
+                    insertElement = function(elem) {
                         mceSelection.select($targetNode.get(0));
                         mceSelection.setNode(elem);
                     };
                 }
                 else {
-                    addUrl = window.chooserUrls.imageChooser + '?select_format=true';
+                    url = window.chooserUrls.imageChooser;
+                    urlParams = {
+                        select_format: true
+                    };
                     // otherwise target immediate child of nearest div container
                     $targetNode = $currentNode.parentsUntil('div:not([data-embedtype])').not('body,html').last();
                     if (0 == $targetNode.length) {
@@ -71,20 +73,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         $targetNode = $currentNode;
                     }
                     // select and insert after target
-                    addMethod = function(elem) {
+                    insertElement = function(elem) {
                         $(elem).insertBefore($targetNode);
                         mceSelection.select(elem);
                     };
                 }
 
                 ModalWorkflow({
-                    url: addUrl,
+                    url: url,
+                    urlParams: urlParams,
                     responses: {
                         imageChosen: function(imageData) {
                             var elem = $(imageData.html).get(0);
                             editor.undoManager.transact(function() {
                                 editor.focus();
-                                addMethod(elem);
+                                insertElement(elem);
                                 fixContent();
                             });
                         }

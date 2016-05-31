@@ -116,14 +116,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
             editor.addButton('wagtaildoclink', {
                 icon: 'doc-full',
-                tooltip: 'Documents',
+                tooltip: 'Insert/edit document',
                 onclick: showDialog,
                 stateSelector: 'a[data-linktype=document]'
             });
 
             editor.addMenuItem('wagtaildoclink', {
                 icon: 'doc-full',
-                text: 'Documents',
+                text: 'Insert/edit document',
                 onclick: showDialog,
                 context: 'insert',
                 prependToContext: true

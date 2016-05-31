@@ -85,7 +85,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     }
                     else if (linkType != 'page') {
                         url = window.chooserUrls.externalLinkChooser;
-                        urlParams['link_url'] = href;
+                        if (href != 'undefined') {
+                            urlParams['link_url'] = href;
+                        }
                     }
                     if( $targetNode.children().length == 0 )
                     {

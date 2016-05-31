@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Isotoma Limited
+Copyright (c) 2016, Isotoma Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,69 +28,109 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 (function() {
     'use strict';
 
-    (function($) {
+    function createLink(pageData, currentText)
+    {
+        var a, text;
 
-        tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
-
-        var linkPlugin;
-
-        function getDependencies() {
-            linkPlugin = tinymce.PluginManager.get('wagtaillink');
-            if (linkPlugin === undefined) {
-                setTimeout(getDependencies, 100)
-            } else {
-                addPlugin()
-            }
+        // Create link
+        a = document.createElement('a');
+        a.setAttribute('href', pageData.url);
+        if (pageData.id) {
+            a.setAttribute('data-id', pageData.id);
+            a.setAttribute('data-linktype', 'document');
+            text = currentText || pageData.title;
         }
-        getDependencies();
+        else {
+            text = pageData.title;
+        }
+        a.appendChild(document.createTextNode(text));
 
-        function addPlugin() {
-            function DocLinkPlugin(editor) {
-                this.editor = editor;
-                this.hook();
-            }
-            $.extend(DocLinkPlugin.prototype, linkPlugin.prototype, {
-                responseType: 'documentChosen',
-                hook: function() {
-                    var self = this;
-                    this.editor.addButton('wagtaildoclink', {
-                        icon: 'doc-full',
-                        tooltip: 'Documents',
-                        onclick: function () { return self.showDialog(); },
-                        stateSelector: 'a[data-linktype=document]'
-                    });
+        return a;
+    }
 
-                    this.editor.addMenuItem('wagtaildoclink', {
-                        icon: 'doc-full',
-                        text: 'Documents',
-                        onclick: function () { return self.showDialog(); },
-                        context: 'insert',
-                        prependToContext: true
-                    });
+    (function($) {
+        tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
+        tinymce.PluginManager.add('wagtaildoclink', function (editor) {
 
-                    this.editor.addCommand('mceWagtailDocuments', function () { return self.showDialog(); });
-                },
-                getChooserUrl: function () {
-                    return window.chooserUrls.documentChooser;
-                },
-                getLinkAttrs: function (docData, text) {
-                    var href = docData.url || docData.edit_link,
-                        title = (
-                            docData.title
-                            ? (docData.title === href && text.length ? text : docData.title)
-                            : text
-                        );
-                    return {
-                        href: href,
-                        title: title,
-                        'data-id': docData.id,
-                        'data-linktype': 'document'
+            function showDialog() {
+                var url, urlParams, mceSelection, $currentNode, $targetNode, currentText, insertElement;
+
+                currentText = '';
+                url = window.chooserUrls.documentChooser;
+                urlParams = {};
+
+                mceSelection = editor.selection;
+                $currentNode = $(mceSelection.getEnd());
+                // target selected link (if any)
+                $targetNode = $currentNode.closest('a[href]');
+
+                if ($targetNode.length) {
+                    currentText = $targetNode.text();
+                    if( $targetNode.children().length == 0 )
+                    {
+                        // select and replace text-only target
+                        insertElement = function(elem) {
+                            mceSelection.select($targetNode.get(0));
+                            mceSelection.setNode(elem);
+                        };
+                    }
+                    else {
+                        // replace attributes of complex target
+                        insertElement = function(elem) {
+                            mceSelection.select($targetNode.get(0));
+                            var $elem = $(elem);
+                            $targetNode.attr('href', $elem.attr('href'));
+                            if ($elem.data('linktype')) {
+                                $targetNode.data($elem.data());
+                            }
+                            else {
+                                $targetNode.removeData('linktype');
+                                $targetNode.removeAttr('data-linktype');
+                            }
+                        };
+                    }
+                }
+                else {
+                    if (!mceSelection.isCollapsed()) {
+                        currentText = mceSelection.getContent({format: 'text'});
+                    }
+                    // replace current selection
+                    insertElement = function(elem) {
+                        mceSelection.setNode(elem);
                     };
                 }
+
+                ModalWorkflow({
+                    url: url,
+                    urlParams: urlParams,
+                    responses: {
+                        documentChosen: function(pageData) {
+                            editor.undoManager.transact(function() {
+                                editor.focus();
+                                insertElement(createLink(pageData, currentText));
+                            });
+                        }
+                    }
+                });
+            }
+
+            editor.addButton('wagtaildoclink', {
+                icon: 'doc-full',
+                tooltip: 'Documents',
+                onclick: showDialog,
+                stateSelector: 'a[data-linktype=document]'
             });
 
-            tinymce.PluginManager.add('wagtaildoclink', DocLinkPlugin);
-        }
+            editor.addMenuItem('wagtaildoclink', {
+                icon: 'doc-full',
+                text: 'Documents',
+                onclick: showDialog,
+                context: 'insert',
+                prependToContext: true
+            });
+
+            editor.addCommand('mceWagtailDocuments', showDialog);
+        });
     })(jQuery);
 
 }).call(this);

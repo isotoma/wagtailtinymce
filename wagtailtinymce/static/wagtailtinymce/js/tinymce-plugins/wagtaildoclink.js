@@ -49,7 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
     (function($) {
-        tinymce.PluginManager.requireLangPack('wagtaildoclink', mceOptions.language);
         tinymce.PluginManager.add('wagtaildoclink', function (editor) {
 
             function showDialog() {
@@ -129,7 +128,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 prependToContext: true
             });
 
-            editor.addCommand('mceWagtailDocuments', showDialog);
+            editor.addCommand('mceWagtailDocument', showDialog);
         });
     })(jQuery);
 

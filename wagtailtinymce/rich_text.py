@@ -28,6 +28,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django.forms import widgets
+from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
 from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
 from wagtail.wagtailcore.rich_text import DbWhitelister
@@ -35,6 +36,36 @@ from wagtail.wagtailcore.rich_text import expand_db_html
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
+
+    @classmethod
+    def getDefaultArgs(cls):
+        return {
+            'buttons': [
+                [
+                    ['undo', 'redo'],
+                    ['styleselect'],
+                    ['bold', 'italic'],
+                    ['bullist', 'numlist', 'outdent', 'indent'],
+                    ['table'],
+                    ['link', 'unlink'],
+                    ['wagtaildoclink', 'wagtailimage', 'wagtailembed'],
+                    ['pastetext', 'fullscreen'],
+                ]
+            ],
+            'menus': False,
+            'options': {
+                'browser_spellcheck': True,
+                'noneditable_leave_contenteditable': True,
+                'language': translation.to_locale(translation.get_language()),
+                'language_load': True,
+            },
+        }
+
+    def __init__(self, attrs=None, **kwargs):
+        super(TinyMCERichTextArea, self).__init__(attrs)
+        self.kwargs = self.getDefaultArgs()
+        if kwargs is not None:
+            self.kwargs.update(kwargs)
 
     def get_panel(self):
         return RichTextFieldPanel
@@ -47,7 +78,16 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         return super(TinyMCERichTextArea, self).render(name, translated_value, attrs)
 
     def render_js_init(self, id_, name, value):
-        return "makeTinyMCEEditable({0});".format(json.dumps(id_))
+        kwargs = {
+            'toolbar': [
+                ' | '.join([' '.join(groups) for groups in rows])
+                for rows in self.kwargs.get('buttons', [])
+            ],
+            'menubar': self.kwargs.get('menus', []),
+            'options': self.kwargs.get('options', {}),
+        }
+
+        return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 
     def value_from_datadict(self, data, files, name):
         original_value = super(TinyMCERichTextArea, self).value_from_datadict(data, files, name)

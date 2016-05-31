@@ -51,7 +51,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }
 
     (function($) {
-        tinymce.PluginManager.requireLangPack('wagtaillink', mceOptions.language);
         tinymce.PluginManager.add('wagtaillink', function (editor) {
 
             function showDialog() {

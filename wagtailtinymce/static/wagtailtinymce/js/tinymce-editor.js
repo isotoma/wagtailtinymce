@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Isotoma Limited
+Copyright (c) 2016, Isotoma Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 'use strict';
 
-var mcePlugins = ['hr'],
-    mceExternalPlugins = {},
-    mceTools = [],
-    mceButtons = [
-        'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link unlink'
-        ],
-    mceOptions = {},
-    mceMenubar = 'file edit insert view format table tools'
+var mcePlugins = ['hr', 'code', 'fullscreen', 'noneditable', 'paste', 'table'],
+    mceTools = ['inserttable'],
+    mceExternalPlugins = {};
 
-function registerMCEPlugin(name, path) {
+function registerMCEPlugin(name, path, language) {
     if (path) {
         mceExternalPlugins[name] = path;
+        if (language) {
+            tinymce.PluginManager.requireLangPack(name, language);
+        }
     } else {
         mcePlugins.push(name);
     }
@@ -48,39 +46,14 @@ function registerMCETool(name) {
     mceTools.push(name);
 }
 
-function registerMCEButton(name, row) {
-    if (row === undefined) {
-        row = 0;
-    }
-    mceButtons[row] += ' ' + (name);
-}
+function makeTinyMCEEditable(id, kwargs) {
 
-function unregisterMCEButton(name, row) {
-    if (row === undefined) {
-        row = 0;
-    }
-    mceButtons[row] = mceButtons[row].replace(' ' + (name), '');
-}
-
-function setMCEOption(name, value) {
-    mceOptions[name] = value;
-}
-
-function setMCEMenubar(option) {
-    mceMenubar = option;
-}
-
-function makeTinyMCEEditable(id, options) {
-
-    options = options || {};
-    $.extend(options, mceOptions);
-    $.extend(options, {
+    kwargs = kwargs || {};
+    $.extend(kwargs, {
         selector: '#' + id.toString(),
         plugins: mcePlugins,
         tools: mceTools,
         external_plugins: mceExternalPlugins,
-        toolbar: mceButtons,
-        menubar: mceMenubar,
         setup: function (editor) {
             editor.on('change', function () {
                 editor.save();
@@ -88,5 +61,5 @@ function makeTinyMCEEditable(id, options) {
         }
     });
 
-    tinymce.init(options);
+    tinymce.init(kwargs);
 }

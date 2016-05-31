@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     'use strict';
 
     (function($) {
-        tinymce.PluginManager.requireLangPack('wagtailimage', mceOptions.language);
         tinymce.PluginManager.add('wagtailimage', function(editor) {
 
             /* stop editing and resizing of embedded image content */

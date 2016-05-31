@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     'use strict';
 
     (function($) {
-        tinymce.PluginManager.requireLangPack('wagtailembeds', mceOptions.language);
         tinymce.PluginManager.add('wagtailembeds', function(editor) {
 
             /* stop editing and resizing of embedded media content */
@@ -90,22 +89,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 });
             }
 
-            editor.addButton('wagtailembeds', {
+            editor.addButton('wagtailembed', {
                 icon: 'media',
-                tooltip: 'Insert/edit media',
+                tooltip: 'Insert/edit embed',
                 onclick: showDialog,
                 stateSelector: '[data-embedtype=media]'
             });
 
-            editor.addMenuItem('wagtailembeds', {
+            editor.addMenuItem('wagtailembed', {
                 icon: 'media',
-                text: 'Insert/edit media',
+                text: 'Insert/edit embed',
                 onclick: showDialog,
                 context: 'insert',
                 prependToContext: true
             });
 
-            editor.addCommand('mceWagtailEmbeds', showDialog);
+            editor.addCommand('mceWagtailEmbed', showDialog);
 
             editor.on('LoadContent', function (e) {
                 fixContent();

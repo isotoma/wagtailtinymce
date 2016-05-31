@@ -31,7 +31,7 @@ var mcePlugins = ['hr'],
     mceExternalPlugins = {},
     mceTools = [],
     mceButtons = [
-        'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link'
+        'undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | link unlink'
         ],
     mceOptions = {},
     mceMenubar = 'file edit insert view format table tools'

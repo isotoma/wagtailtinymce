@@ -1,6 +1,12 @@
 Changes
 =======
 
+4.2.1.5 (unreleased)
+--------------------
+
+- Nothing changed yet.
+
+
 4.2.1.4 (2016-06-01)
 --------------------
 - Update to use Wagtail 1.5 pluggable rich text editor mechanism.

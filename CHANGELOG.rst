@@ -1,7 +1,7 @@
 Changes
 =======
 
-4.2.1.4
+4.2.1.4 (unreleased)
 --------------------
 - Update to use Wagtail 1.5 pluggable rich text editor mechanism.
 - Refactor link and doclink plugins to remove race condition.

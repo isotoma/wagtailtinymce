@@ -79,13 +79,23 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
 
     def render_js_init(self, id_, name, value):
         kwargs = {
-            'toolbar': [
-                ' | '.join([' '.join(groups) for groups in rows])
-                for rows in self.kwargs.get('buttons', [])
-            ],
-            'menubar': self.kwargs.get('menus', []),
             'options': self.kwargs.get('options', {}),
         }
+
+        if 'buttons' in self.kwargs:
+            if self.kwargs['buttons'] is False:
+                kwargs['toolbar'] = False
+            else:
+                kwargs['toolbar'] = [
+                    ' | '.join([' '.join(groups) for groups in rows])
+                    for rows in self.kwargs['buttons']
+                ]
+
+        if 'menus' in self.kwargs:
+            if self.kwargs['menus'] is False:
+                kwargs['menubar'] = False
+            else:
+                kwargs['menubar'] = ' '.join(self.kwargs['menus'])
 
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 

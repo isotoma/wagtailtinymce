@@ -28,11 +28,11 @@ import json
 
 from django.core.urlresolvers import reverse
 from django.templatetags.static import static
+from django.utils import translation
 from django.utils.html import escape
 from django.utils.html import format_html
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
-from django.utils import translation
 
 from wagtail.wagtailadmin.templatetags.wagtailadmin_tags import hook_output
 from wagtail.wagtailcore import hooks
@@ -105,7 +105,7 @@ def embeds_richtexteditor_js():
         """,
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailembeds.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
-        )
+    )
 
 
 @hooks.register('insert_tinymce_js')

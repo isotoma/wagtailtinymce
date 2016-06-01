@@ -1,4 +1,4 @@
-# Copyright (c) 2015, Isotoma Limited
+# Copyright (c) 2016, Isotoma Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,13 +40,13 @@ def read(filename):
 
 
 install_requires = [
-    'wagtail>=1.0b2',
+    'wagtail>=1.5',
     ]
 
 
 setup(
     name='wagtailtinymce',
-    version='4.2.1.3',
+    version='4.2.1.5.dev0',
     description='A TinyMCE editor integration for Wagtail',
     author='Richard Mitchell',
     author_email='richard.mitchell@isotoma.com',
@@ -68,6 +68,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Framework :: Django',
         'Topic :: Internet :: WWW/HTTP :: Site Management',
     ],

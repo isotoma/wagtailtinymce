@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015, Isotoma Limited
+Copyright (c) 2016, Isotoma Limited
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     'use strict';
 
     (function($) {
-        tinymce.PluginManager.requireLangPack('wagtailembeds', mceOptions.language);
         tinymce.PluginManager.add('wagtailembeds', function(editor) {
 
             /* stop editing and resizing of embedded media content */
@@ -40,27 +39,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             }
 
             function showDialog() {
-                var addUrl, mceSelection, $currentNode, $targetNode, addMethod;
+                var url, urlParams, mceSelection, $currentNode, $targetNode, insertElement;
 
-                addUrl = window.chooserUrls.embedsChooser;
+                url = window.chooserUrls.embedsChooser;
                 mceSelection = editor.selection;
                 $currentNode = $(mceSelection.getEnd());
                 // target selected embed (if any)
                 $targetNode = $currentNode.closest('[data-embedtype=media]');
                 if ($targetNode.length) {
-                    addUrl += addUrl.indexOf('?') > -1 ? '&' : '?';
-                    addUrl += $.param({
+                    urlParams = {
                         edit: 1,
                         url: $targetNode.data('url'),
                         caption: $targetNode.data('caption')
-                    });
+                    };
                     // select and replace target
-                    addMethod = function(elem) {
+                    insertElement = function(elem) {
                         mceSelection.select($targetNode.get(0));
                         mceSelection.setNode(elem);
                     };
-                } 
+                }
                 else {
+                    urlParams = {};
                     // otherwise target immediate child of nearest div container
                     $targetNode = $currentNode.parentsUntil('div:not([data-embedtype])').not('body,html').last();
                     if (0 == $targetNode.length) {
@@ -68,20 +67,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         $targetNode = $currentNode;
                     }
                     // select and insert after target
-                    addMethod = function(elem) {
+                    insertElement = function(elem) {
                         $(elem).insertBefore($targetNode);
                         mceSelection.select(elem);
                     };
                 }
 
                 ModalWorkflow({
-                    url: addUrl,
+                    url: url,
+                    urlParams: urlParams,
                     responses: {
                         embedChosen: function(embedData) {
                             var elem = $(embedData).get(0);
                             editor.undoManager.transact(function() {
                                 editor.focus();
-                                addMethod(elem);
+                                insertElement(elem);
                                 fixContent();
                             });
                         }
@@ -89,22 +89,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 });
             }
 
-            editor.addButton('wagtailembeds', {
+            editor.addButton('wagtailembed', {
                 icon: 'media',
-                tooltip: 'Insert/edit media',
+                tooltip: 'Insert/edit embed',
                 onclick: showDialog,
                 stateSelector: '[data-embedtype=media]'
             });
 
-            editor.addMenuItem('wagtailembeds', {
+            editor.addMenuItem('wagtailembed', {
                 icon: 'media',
-                text: 'Insert/edit media',
+                text: 'Insert/edit embed',
                 onclick: showDialog,
                 context: 'insert',
                 prependToContext: true
             });
 
-            editor.addCommand('mceWagtailEmbeds', showDialog);
+            editor.addCommand('mceWagtailEmbed', showDialog);
 
             editor.on('LoadContent', function (e) {
                 fixContent();

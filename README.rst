@@ -51,14 +51,16 @@ Or, to use TinyMCE for certain instances...
 TinyMCE configuration
 ===================== 
 
-The ``TinyMCERichTextArea`` constructor accepts keyword arguments for buttons, menus and options which are merged with defaults and passed to TinyMCE. Wagtail does not currently allow for passing parameters to this constructor so the customisation mechanism is to create and register a subclass and pass these parameters or amend defaults from there.
+The ``TinyMCERichTextArea`` constructor accepts keyword arguments for buttons, menus and options which are merged with defaults and passed to TinyMCE. 
+
+However, Wagtail does not currently allow for passing parameters to this constructor. To change the configuration you must create and register a subclass of ``TinyMCERichTextArea`` and pass these parameters or amend defaults in the subclass constructor.
 
 Buttons
 -------
 
 These are configured as a list of menu bars, each containing a list of groups, each containing a list of button names.
 
-By TinyMCE is loaded with buttons for undo/redo, a styles dropdown, bold/italic, lists and tables, link/unlink, Wagtail documents/images/embeds, paste filter toggle and edit fullscreen.
+By default, TinyMCE is loaded with buttons for undo/redo, a styles dropdown, bold/italic, lists and tables, link/unlink, Wagtail documents/images/embeds, paste filter toggle and edit fullscreen.
 
 Menu
 ----

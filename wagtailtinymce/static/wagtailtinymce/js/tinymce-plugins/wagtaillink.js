@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         a.setAttribute('href', pageData.url);
         if (pageData.id) {
             a.setAttribute('data-id', pageData.id);
+            a.setAttribute('data-parent-id', pageData.parentId);
             a.setAttribute('data-linktype', 'page');
             // If it's a link to an internal page, `pageData.title` will not use the link_text
             // like external and email responses do, overwriting selection text :(
@@ -71,11 +72,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 if ($targetNode.length) {
                     currentText = $targetNode.text();
                     var linkType = $targetNode.data('linktype');
-                    var pageId = $targetNode.data('id');
+                    var parentPageId = $targetNode.data('parent-id');
                     var href = $targetNode.attr('href');
-                    if (linkType == 'page' && pageId) {
-                        // TODO: Actually show the parent not the page itself.
-                        url = window.chooserUrls.pageChooser + pageId.toString() + '/';
+                    if (linkType == 'page' && parentPageId) {
+                        url = window.chooserUrls.pageChooser + parentPageId.toString() + '/';
                     }
                     else if (href.startsWith('mailto:')) {
                         url = window.chooserUrls.emailLinkChooser;

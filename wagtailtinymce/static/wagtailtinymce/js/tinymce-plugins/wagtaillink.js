@@ -82,11 +82,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         href = href.replace('mailto:', '');
                         urlParams['link_url'] = href;
                     }
-                    else if (linkType != 'page') {
+                    else if (linkType == '') {
                         url = window.chooserUrls.externalLinkChooser;
-                        if (href != 'undefined') {
-                            urlParams['link_url'] = href;
-                        }
+                        urlParams['link_url'] = href;
                     }
                     if( $targetNode.children().length == 0 )
                     {

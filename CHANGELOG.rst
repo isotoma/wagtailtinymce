@@ -4,8 +4,8 @@ Changes
 4.2.1.5 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Alter doclink editing fixes in line with Wagtail 1.5.1 Hallo editor.
+- Change page chooser to use parent page ID in line with Wagtail 1.5.1 Hallo editor.
 
 4.2.1.4 (2016-06-01)
 --------------------

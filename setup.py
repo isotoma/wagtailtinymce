@@ -40,7 +40,7 @@ def read(filename):
 
 
 install_requires = [
-    'wagtail>=1.5',
+    'wagtail>=1.5.1',
     ]
 
 
@@ -70,6 +70,8 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Framework :: Django',
+        'Framework :: Django :: 1.8',
+        'Framework :: Django :: 1.9',
         'Topic :: Internet :: WWW/HTTP :: Site Management',
     ],
     install_requires=install_requires,

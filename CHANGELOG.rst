@@ -1,7 +1,7 @@
 Changes
 =======
 
-4.2.1.5 (unreleased)
+4.2.1.5 (2016-06-08)
 --------------------
 
 - Alter doclink editing fixes in line with Wagtail 1.5.1 Hallo editor.

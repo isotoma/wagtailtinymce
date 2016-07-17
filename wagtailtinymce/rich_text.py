@@ -33,6 +33,60 @@ from wagtail.utils.widgets import WidgetWithScript
 from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
 from wagtail.wagtailcore.rich_text import DbWhitelister
 from wagtail.wagtailcore.rich_text import expand_db_html
+from wagtail.wagtailcore.whitelist import allow_without_attributes, attribute_rule, check_url
+
+
+class DbTinymceWhitelister(DbWhitelister):
+    """
+    A custom whitelisting engine to convert the HTML as returned by the rich text editor
+    into the pseudo-HTML format stored in the database (in which images, documents and other
+    linked objects are identified by ID rather than URL):
+
+    * implements a 'construct_whitelister_element_rules' hook so that other apps can modify
+      the whitelist ruleset (e.g. to permit additional HTML elements beyond those in the base
+      Whitelister module);
+    * replaces any element with a 'data-embedtype' attribute with an <embed> element, with
+      attributes supplied by the handler for that type as defined in EMBED_HANDLERS;
+    * rewrites the attributes of any <a> element with a 'data-linktype' attribute, as
+      determined by the handler for that type defined in LINK_HANDLERS, while keeping the
+      element content intact.
+    """
+    table_allow_attr = {'border': True, 'cellpadding': True, 'cellspacing': True, 'style': True, 'width': True, 'border': True,
+                        'colspan': True, 'margin-left': True, 'margin-right': True, 'height': True, 'border-color': True,
+                        'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True}
+
+    element_rules = {
+        '[document]': allow_without_attributes,
+        'a': attribute_rule({'href': check_url}),
+        'b': allow_without_attributes,
+        'br': allow_without_attributes,
+        'div': allow_without_attributes,
+        'em': allow_without_attributes,
+        'h1': allow_without_attributes,
+        'h2': allow_without_attributes,
+        'h3': allow_without_attributes,
+        'h4': allow_without_attributes,
+        'h5': allow_without_attributes,
+        'h6': allow_without_attributes,
+        'hr': allow_without_attributes,
+        'i': allow_without_attributes,
+        'img': attribute_rule({'src': check_url, 'width': True, 'height': True,
+                               'alt': True}),
+        'li': allow_without_attributes,
+        'ol': allow_without_attributes,
+        'p': allow_without_attributes,
+        'strong': allow_without_attributes,
+        'sub': allow_without_attributes,
+        'sup': allow_without_attributes,
+        'ul': allow_without_attributes,
+
+        'table': attribute_rule(table_allow_attr),
+        'caption': attribute_rule(table_allow_attr),
+        'tbody': attribute_rule(table_allow_attr),
+        'th': attribute_rule(table_allow_attr),
+        'tr': attribute_rule(table_allow_attr),
+        'td': attribute_rule(table_allow_attr),
+    }
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
@@ -100,7 +154,8 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 
     def value_from_datadict(self, data, files, name):
-        original_value = super(TinyMCERichTextArea, self).value_from_datadict(data, files, name)
+        original_value = super(TinyMCERichTextArea,
+                               self).value_from_datadict(data, files, name)
         if original_value is None:
             return None
-        return DbWhitelister.clean(original_value)
+        return DbTinymceWhitelister.clean(original_value)

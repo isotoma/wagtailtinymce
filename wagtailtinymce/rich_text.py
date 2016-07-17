@@ -110,7 +110,7 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,
-                'language': translation.to_locale(translation.get_language()),
+                'language': translation.to_locale(translation.get_language() or 'en'),
                 'language_load': True,
             },
         }

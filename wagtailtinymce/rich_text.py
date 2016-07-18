@@ -51,17 +51,17 @@ class DbTinymceWhitelister(DbWhitelister):
       determined by the handler for that type defined in LINK_HANDLERS, while keeping the
       element content intact.
     """
-    table_allow_attr = {'border': True, 'cellpadding': True, 'cellspacing': True, 'style': True, 'width': True, 'border': True,
-                        'colspan': True, 'margin-left': True, 'margin-right': True, 'height': True, 'border-color': True,
-                        'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True}
+    allow_attr = {'border': True, 'cellpadding': True, 'cellspacing': True, 'style': True, 'width': True, 'border': True,
+                  'colspan': True, 'margin-left': True, 'margin-right': True, 'height': True, 'border-color': True,
+                  'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True}
 
     element_rules = {
         '[document]': allow_without_attributes,
         'a': attribute_rule({'href': check_url}),
         'b': allow_without_attributes,
         'br': allow_without_attributes,
-        'div': allow_without_attributes,
-        'em': allow_without_attributes,
+        'div': attribute_rule(allow_attr),
+        'em': attribute_rule(allow_attr),
         'h1': allow_without_attributes,
         'h2': allow_without_attributes,
         'h3': allow_without_attributes,
@@ -72,21 +72,52 @@ class DbTinymceWhitelister(DbWhitelister):
         'i': allow_without_attributes,
         'img': attribute_rule({'src': check_url, 'width': True, 'height': True,
                                'alt': True}),
-        'li': allow_without_attributes,
-        'ol': allow_without_attributes,
-        'p': allow_without_attributes,
-        'strong': allow_without_attributes,
-        'sub': allow_without_attributes,
-        'sup': allow_without_attributes,
-        'ul': allow_without_attributes,
+        'li': attribute_rule(allow_attr),
+        'ol': attribute_rule(allow_attr),
+        'p': attribute_rule(allow_attr),
+        'strong': attribute_rule(allow_attr),
+        'sub': attribute_rule(allow_attr),
+        'sup': attribute_rule(allow_attr),
+        'ul': attribute_rule(allow_attr),
 
-        'table': attribute_rule(table_allow_attr),
-        'caption': attribute_rule(table_allow_attr),
-        'tbody': attribute_rule(table_allow_attr),
-        'th': attribute_rule(table_allow_attr),
-        'tr': attribute_rule(table_allow_attr),
-        'td': attribute_rule(table_allow_attr),
+        'blockquote': attribute_rule(allow_attr),
+        'pre': attribute_rule(allow_attr),
+        'span': attribute_rule(allow_attr),
+        'code': attribute_rule(allow_attr),
+
+        'table': attribute_rule(allow_attr),
+        'caption': attribute_rule(allow_attr),
+        'tbody': attribute_rule(allow_attr),
+        'th': attribute_rule(allow_attr),
+        'tr': attribute_rule(allow_attr),
+        'td': attribute_rule(allow_attr),
     }
+
+    @classmethod
+    def clean_tag_node(cls, doc, tag):
+        if 'data-embedtype' in tag.attrs:
+            embed_type = tag['data-embedtype']
+            # fetch the appropriate embed handler for this embedtype
+            embed_handler = get_embed_handler(embed_type)
+            embed_attrs = embed_handler.get_db_attributes(tag)
+            embed_attrs['embedtype'] = embed_type
+
+            embed_tag = doc.new_tag('embed', **embed_attrs)
+            embed_tag.can_be_empty_element = True
+            tag.replace_with(embed_tag)
+        elif tag.name == 'a' and 'data-linktype' in tag.attrs:
+            # first, whitelist the contents of this tag
+            for child in tag.contents:
+                cls.clean_node(doc, child)
+
+            link_type = tag['data-linktype']
+            link_handler = get_link_handler(link_type)
+            link_attrs = link_handler.get_db_attributes(tag)
+            link_attrs['linktype'] = link_type
+            tag.attrs.clear()
+            tag.attrs.update(**link_attrs)
+        else:
+            super(DbWhitelister, cls).clean_tag_node(doc, tag)
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):

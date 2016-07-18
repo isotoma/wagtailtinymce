@@ -32,7 +32,7 @@ from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
 from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
 from wagtail.wagtailcore.rich_text import DbWhitelister
-from wagtail.wagtailcore.rich_text import expand_db_html
+from wagtail.wagtailcore.rich_text import expand_db_html, get_link_handler, get_embed_handler
 from wagtail.wagtailcore.whitelist import allow_without_attributes, attribute_rule, check_url
 
 

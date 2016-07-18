@@ -78,9 +78,7 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         return super(TinyMCERichTextArea, self).render(name, translated_value, attrs)
 
     def render_js_init(self, id_, name, value):
-        kwargs = {
-            'options': self.kwargs.get('options', {}),
-        }
+        kwargs = self.kwargs.get('options', {})
 
         if 'buttons' in self.kwargs:
             if self.kwargs['buttons'] is False:

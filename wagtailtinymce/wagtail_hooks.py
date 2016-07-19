@@ -27,7 +27,7 @@
 import json
 
 from django.core.urlresolvers import reverse
-from django.templatetags.static import static
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.utils import translation
 from django.utils.html import escape
 from django.utils.html import format_html
@@ -89,9 +89,11 @@ def images_richtexteditor_js():
             window.chooserUrls.imageChooserSelectFormat = {};
         </script>
         """,
-        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailimage.js')),
+        to_js_primitive(
+            static('wagtailtinymce/js/tinymce-plugins/wagtailimage.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
-        to_js_primitive(reverse('wagtailimages:chooser_select_format', args=['00000000']))
+        to_js_primitive(
+            reverse('wagtailimages:chooser_select_format', args=['00000000']))
     )
 
 
@@ -103,7 +105,8 @@ def embeds_richtexteditor_js():
             registerMCEPlugin("wagtailembeds", {}, {});
         </script>
         """,
-        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailembeds.js')),
+        to_js_primitive(
+            static('wagtailtinymce/js/tinymce-plugins/wagtailembeds.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )
 
@@ -116,7 +119,8 @@ def links_richtexteditor_js():
             registerMCEPlugin("wagtaillink", {}, {});
         </script>
         """,
-        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaillink.js')),
+        to_js_primitive(
+            static('wagtailtinymce/js/tinymce-plugins/wagtaillink.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )
 
@@ -129,6 +133,7 @@ def docs_richtexteditor_js():
             registerMCEPlugin("wagtaildoclink", {}, {});
         </script>
         """,
-        to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaildoclink.js')),
+        to_js_primitive(
+            static('wagtailtinymce/js/tinymce-plugins/wagtaildoclink.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )

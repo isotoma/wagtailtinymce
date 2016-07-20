@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 'use strict';
 
-var mcePlugins = ['hr', 'code', 'fullscreen', 'noneditable', 'paste', 'table', 'lists'],
+var mcePlugins = ['hr', 'code', 'fullscreen', 'noneditable', 'paste', 'table', 'advlist', 'lists', 'contextmenu'],
     mceTools = ['inserttable'],
     mceExternalPlugins = {};
 
@@ -60,6 +60,6 @@ function makeTinyMCEEditable(id, kwargs) {
             });
         }
     });
-
+    tinymce.suffix = '.min'
     tinymce.init(kwargs);
 }

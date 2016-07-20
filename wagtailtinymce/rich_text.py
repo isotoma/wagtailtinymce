@@ -137,7 +137,7 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                     ['pastetext', 'fullscreen'],
                 ]
             ],
-            'menus': False,
+            'menus': ['edit',  'insert', 'view', 'format', 'table', 'tools'],
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,

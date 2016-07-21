@@ -6,3 +6,7 @@
 /.tx
 /translations
 __pycache__
+/.DS_Store
+build/
+dist/
+wagtailtinymce.egg-info/

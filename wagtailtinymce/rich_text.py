@@ -53,8 +53,8 @@ class DbTinymceWhitelister(DbWhitelister):
     """
     allow_attr = {'border': True, 'cellpadding': True, 'cellspacing': True, 'style': True, 'width': True, 'border': True,
                   'colspan': True, 'margin-left': True, 'margin-right': True, 'height': True, 'border-color': True,
-                  'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True}
-
+                  'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True, 'font-family': True,
+                  'rowspan': True, 'valign': True}
     element_rules = {
         '[document]': allow_without_attributes,
         'a': attribute_rule({'href': check_url}),

@@ -32,7 +32,92 @@ from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
 from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
 from wagtail.wagtailcore.rich_text import DbWhitelister
-from wagtail.wagtailcore.rich_text import expand_db_html
+from wagtail.wagtailcore.rich_text import expand_db_html, get_link_handler, get_embed_handler
+from wagtail.wagtailcore.whitelist import allow_without_attributes, attribute_rule, check_url
+
+
+class DbTinymceWhitelister(DbWhitelister):
+    """
+    A custom whitelisting engine to convert the HTML as returned by the rich text editor
+    into the pseudo-HTML format stored in the database (in which images, documents and other
+    linked objects are identified by ID rather than URL):
+
+    * implements a 'construct_whitelister_element_rules' hook so that other apps can modify
+      the whitelist ruleset (e.g. to permit additional HTML elements beyond those in the base
+      Whitelister module);
+    * replaces any element with a 'data-embedtype' attribute with an <embed> element, with
+      attributes supplied by the handler for that type as defined in EMBED_HANDLERS;
+    * rewrites the attributes of any <a> element with a 'data-linktype' attribute, as
+      determined by the handler for that type defined in LINK_HANDLERS, while keeping the
+      element content intact.
+    """
+    allow_attr = {'border': True, 'cellpadding': True, 'cellspacing': True, 'style': True, 'width': True, 'border': True,
+                  'colspan': True, 'margin-left': True, 'margin-right': True, 'height': True, 'border-color': True,
+                  'text-align': True, 'background-color': True, 'vertical-align': True, 'scope': True, 'font-family': True,
+                  'rowspan': True, 'valign': True}
+    element_rules = {
+        '[document]': allow_without_attributes,
+        'a': attribute_rule({'href': check_url}),
+        'b': allow_without_attributes,
+        'br': allow_without_attributes,
+        'div': attribute_rule(allow_attr),
+        'em': attribute_rule(allow_attr),
+        'h1': attribute_rule(allow_attr),
+        'h2': attribute_rule(allow_attr),
+        'h3': attribute_rule(allow_attr),
+        'h4': attribute_rule(allow_attr),
+        'h5': attribute_rule(allow_attr),
+        'h6': attribute_rule(allow_attr),
+        'hr': allow_without_attributes,
+        'i': allow_without_attributes,
+        'img': attribute_rule({'src': check_url, 'width': True, 'height': True,
+                               'alt': True}),
+        'li': attribute_rule(allow_attr),
+        'ol': attribute_rule(allow_attr),
+        'p': attribute_rule(allow_attr),
+        'strong': attribute_rule(allow_attr),
+        'sub': attribute_rule(allow_attr),
+        'sup': attribute_rule(allow_attr),
+        'ul': attribute_rule(allow_attr),
+
+        'blockquote': attribute_rule(allow_attr),
+        'pre': attribute_rule(allow_attr),
+        'span': attribute_rule(allow_attr),
+        'code': attribute_rule(allow_attr),
+
+        'table': attribute_rule(allow_attr),
+        'caption': attribute_rule(allow_attr),
+        'tbody': attribute_rule(allow_attr),
+        'th': attribute_rule(allow_attr),
+        'tr': attribute_rule(allow_attr),
+        'td': attribute_rule(allow_attr),
+    }
+
+    @classmethod
+    def clean_tag_node(cls, doc, tag):
+        if 'data-embedtype' in tag.attrs:
+            embed_type = tag['data-embedtype']
+            # fetch the appropriate embed handler for this embedtype
+            embed_handler = get_embed_handler(embed_type)
+            embed_attrs = embed_handler.get_db_attributes(tag)
+            embed_attrs['embedtype'] = embed_type
+
+            embed_tag = doc.new_tag('embed', **embed_attrs)
+            embed_tag.can_be_empty_element = True
+            tag.replace_with(embed_tag)
+        elif tag.name == 'a' and 'data-linktype' in tag.attrs:
+            # first, whitelist the contents of this tag
+            for child in tag.contents:
+                cls.clean_node(doc, child)
+
+            link_type = tag['data-linktype']
+            link_handler = get_link_handler(link_type)
+            link_attrs = link_handler.get_db_attributes(tag)
+            link_attrs['linktype'] = link_type
+            tag.attrs.clear()
+            tag.attrs.update(**link_attrs)
+        else:
+            super(DbWhitelister, cls).clean_tag_node(doc, tag)
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
@@ -52,11 +137,11 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                     ['pastetext', 'fullscreen'],
                 ]
             ],
-            'menus': False,
+            'language': translation.to_locale(translation.get_language() or 'en'),
+            'menus': ['edit',  'insert', 'view', 'format', 'table', 'tools'],
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,
-                'language': translation.to_locale(translation.get_language()),
                 'language_load': True,
             },
         }
@@ -91,6 +176,10 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                     for rows in self.kwargs['buttons']
                 ]
 
+        if 'language' in self.kwargs:
+            if self.kwargs['language'] == 'zh_Hans':
+                kwargs['language'] = 'zh_CN'
+
         if 'menus' in self.kwargs:
             if self.kwargs['menus'] is False:
                 kwargs['menubar'] = False
@@ -100,7 +189,8 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 
     def value_from_datadict(self, data, files, name):
-        original_value = super(TinyMCERichTextArea, self).value_from_datadict(data, files, name)
+        original_value = super(TinyMCERichTextArea,
+                               self).value_from_datadict(data, files, name)
         if original_value is None:
             return None
-        return DbWhitelister.clean(original_value)
+        return DbTinymceWhitelister.clean(original_value)

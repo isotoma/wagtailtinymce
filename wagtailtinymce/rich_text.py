@@ -137,11 +137,11 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                     ['pastetext', 'fullscreen'],
                 ]
             ],
+            'language': translation.to_locale(translation.get_language() or 'en'),
             'menus': ['edit',  'insert', 'view', 'format', 'table', 'tools'],
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,
-                'language': translation.to_locale(translation.get_language() or 'en'),
                 'language_load': True,
             },
         }
@@ -175,6 +175,10 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                     ' | '.join([' '.join(groups) for groups in rows])
                     for rows in self.kwargs['buttons']
                 ]
+
+        if 'language' in self.kwargs:
+            if self.kwargs['language'] == 'zh_Hans':
+                kwargs['language'] = 'zh_CN'
 
         if 'menus' in self.kwargs:
             if self.kwargs['menus'] is False:

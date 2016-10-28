@@ -91,6 +91,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         // select and replace text-only target
                         insertElement = function(elem) {
                             mceSelection.select($targetNode.get(0));
+                            // bring over any classes present
+                            if ($targetNode.attr('class')) {
+                                elem.setAttribute('class', $targetNode.attr('class'));
+                            }
                             mceSelection.setNode(elem);
                         };
                     }

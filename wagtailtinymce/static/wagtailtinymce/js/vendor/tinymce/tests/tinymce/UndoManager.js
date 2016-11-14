@@ -86,10 +86,10 @@ test('One undo levels and one redo', function() {
 });
 
 test('Typing state', function() {
+	var selectAllFlags;
+
 	editor.undoManager.clear();
 	editor.setContent('test');
-
-	expect(4);
 
 	ok(!editor.undoManager.typing);
 
@@ -162,8 +162,38 @@ test('Events', function() {
 	ok(redo.bookmark);
 });
 
+test('No undo/redo cmds on Undo/Redo shortcut', function() {
+	var evt, commands = [], added = false;
+
+	editor.undoManager.clear();
+	editor.setContent('test');
+
+	editor.on('BeforeExecCommand', function(e) {
+		commands.push(e.command);
+	});
+
+	editor.on('BeforeAddUndo', function() {
+		added = true;
+	});
+
+	evt = {
+		keyCode: 90,
+		metaKey: tinymce.Env.mac,
+		ctrlKey: !tinymce.Env.mac,
+		shiftKey: false,
+		altKey: false
+	};
+
+	editor.dom.fire(editor.getBody(), 'keydown', evt);
+	editor.dom.fire(editor.getBody(), 'keypress', evt);
+	editor.dom.fire(editor.getBody(), 'keyup', evt);
+
+	strictEqual(added, false);
+	deepEqual(commands, ["Undo"]);
+});
+
 test('Transact', function() {
-	var count = 0;
+	var count = 0, level;
 
 	editor.undoManager.clear();
 
@@ -171,12 +201,32 @@ test('Transact', function() {
 		count++;
 	});
 
-	editor.undoManager.transact(function() {
+	level = editor.undoManager.transact(function() {
 		editor.undoManager.add();
 		editor.undoManager.add();
 	});
 
 	equal(count, 1);
+	equal(level !== null, true);
+});
+
+test('Transact no change', function() {
+	editor.undoManager.add();
+
+	var level = editor.undoManager.transact(function() {
+	});
+
+	equal(level, null);
+});
+
+test('Transact with change', function() {
+	editor.undoManager.add();
+
+	var level = editor.undoManager.transact(function() {
+		editor.setContent('x');
+	});
+
+	equal(level !== null, true);
 });
 
 test('Transact nested', function() {
@@ -223,6 +273,35 @@ test('Transact exception', function() {
 	equal(count, 1);
 });
 
+test('Extra with changes', function() {
+	var data;
+
+	editor.undoManager.clear();
+	editor.setContent('<p>abc</p>');
+	Utils.setSelection('p', 0);
+	editor.undoManager.add();
+
+	editor.undoManager.extra(function() {
+		Utils.setSelection('p', 1, 'p', 2);
+		editor.insertContent('1');
+	}, function () {
+		Utils.setSelection('p', 1, 'p', 2);
+		editor.insertContent('2');
+	});
+
+	data = editor.undoManager.data;
+	equal(data.length, 3);
+	equal(data[0].content, '<p>abc</p>');
+	deepEqual(data[0].bookmark, {start: [0, 0, 0]});
+	deepEqual(data[0].beforeBookmark, {start: [0, 0, 0]});
+	equal(data[1].content, '<p>a1c</p>');
+	deepEqual(data[1].bookmark, {start: [2, 0, 0]});
+	deepEqual(data[1].beforeBookmark, {start: [2, 0, 0]});
+	equal(data[2].content, '<p>a2c</p>');
+	deepEqual(data[2].bookmark, {start: [2, 0, 0]});
+	deepEqual(data[1].beforeBookmark, data[2].bookmark);
+});
+
 test('Exclude internal elements', function() {
 	var count = 0, lastLevel;
 
@@ -259,6 +338,7 @@ test('Exclude internal elements', function() {
 		'<img src="about:blank" data-mce-bogus="all">' +
 		'<br data-mce-bogus="1">' +
 		'test' +
+		'\u200B' +
 		'<img src="about:blank" />' +
 		'<table><tr><td>x</td></tr></table>'
 	);
@@ -268,6 +348,7 @@ test('Exclude internal elements', function() {
 	equal(Utils.cleanHtml(lastLevel.content),
 		'<br data-mce-bogus="1">' +
 		'test' +
+		'\u200B' +
 		'<img src="about:blank">' +
 		'<table><tbody><tr><td>x</td></tr></tbody></table>'
 	);
@@ -337,7 +418,7 @@ test('BeforeAddUndo event', function() {
 
 test('Dirty state type letter', function() {
 	editor.undoManager.clear();
-	editor.isNotDirty = true;
+	editor.setDirty(false);
 	editor.setContent("<p>a</p>");
 	Utils.setSelection('p', 1);
 
@@ -349,7 +430,7 @@ test('Dirty state type letter', function() {
 
 test('Dirty state type shift+letter', function() {
 	editor.undoManager.clear();
-	editor.isNotDirty = true;
+	editor.setDirty(false);
 	editor.setContent("<p>a</p>");
 	Utils.setSelection('p', 1);
 
@@ -361,7 +442,7 @@ test('Dirty state type shift+letter', function() {
 
 test('Dirty state type AltGr+letter', function() {
 	editor.undoManager.clear();
-	editor.isNotDirty = true;
+	editor.setDirty(false);
 	editor.setContent("<p>a</p>");
 	Utils.setSelection('p', 1);
 

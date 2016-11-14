@@ -31,6 +31,8 @@
 			delete editor.settings.table_cell_class_list;
 			delete editor.settings.table_row_class_list;
 			delete editor.settings.table_style_by_css;
+
+			editor.off('newcell newrow');
 		}
 	});
 
@@ -40,6 +42,16 @@
 		win.fromJSON(data);
 		win.find('form')[0].submit();
 		win.close();
+	}
+
+	function testCommand(command, tests) {
+		tinymce.util.Tools.each(tests, function (test) {
+			editor.getBody().innerHTML = test.before;
+			editor.selection.select(editor.dom.select('td[data-mce-selected]')[0], true);
+			editor.selection.collapse(true);
+			editor.execCommand(command);
+			equal(cleanTableHtml(editor.getContent()), test.after, test.message);
+		});
 	}
 
 	function cleanTableHtml(html) {
@@ -503,6 +515,481 @@
 		equal(cleanTableHtml(editor.getContent()), '<table><tbody><tr><td>1</td><td>2</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table>');
 	});
 
+	test("mceTableInsertRowAfter command on merged cells", function() {
+		editor.setContent(
+			'<table>' +
+				'<tr><td>1</td><td>2</td><td>3</td></tr>' +
+				'<tr><td>4</td><td colspan="2" rowspan="2">5</td></tr>' +
+				'<tr><td>6</td></tr>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTableInsertRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td><td>3</td></tr>' +
+					'<tr><td>4</td><td colspan="2" rowspan="3">5</td></tr>' +
+					'<tr><td>&nbsp;</td></tr>' +
+					'<tr><td>6</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowBefore command", function() {
+		editor.setContent(
+			'<table>' +
+				'<tr><td>1</td><td>2</td></tr>' +
+				'<tr><td>2</td><td>3</td></tr>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowBefore');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>2</td><td>3</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowBefore');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>2</td><td>3</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowAfter command", function() {
+		editor.setContent(
+			'<table>' +
+				'<tr><td>1</td><td>2</td></tr>' +
+				'<tr><td>2</td><td>3</td></tr>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>2</td><td>3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>2</td><td>3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowAfter from merged row source", function() {
+		editor.setContent(
+			'<table>' +
+				'<tbody>' +
+					'<tr><td colspan="2">1 2</td><td rowspan="2">3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+		Utils.setSelection('tr:nth-child(2) td:nth-child(2)', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td colspan="2">1 2</td><td rowspan="2">3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>1 2</td><td>3</td><td>&nbsp;</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowAfter from merged row source to merged row target", function() {
+		editor.setContent(
+			'<table>' +
+				'<tbody>' +
+					'<tr><td colspan="2">1 2</td><td rowspan="2">3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td colspan="2">1 2</td><td>3</td></tr>' +
+					'<tr><td>1 2</td><td>3</td><td>&nbsp;</td></tr>' +
+					'<tr><td>1</td><td>2</td><td>&nbsp;</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowAfter to wider table", function() {
+		editor.setContent(
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+				'</tbody>' +
+			'</table>' +
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1b</td><td>2b</td><td>3b</td><td>4b</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('table:nth-child(1) tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+
+		Utils.setSelection('table:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+				'</tbody>' +
+			'</table>' +
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1b</td><td>2b</td><td>3b</td><td>4b</td></tr>' +
+					'<tr><td>1a</td><td>2a</td><td>3a</td><td>&nbsp;</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceTablePasteRowAfter to narrower table", function() {
+		editor.setContent(
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+				'</tbody>' +
+			'</table>' +
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1b</td><td>2b</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+
+		Utils.setSelection('table:nth-child(1) tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+
+		Utils.setSelection('table:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+				'</tbody>' +
+			'</table>' +
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1b</td><td>2b</td></tr>' +
+					'<tr><td>1a</td><td>2a</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("row clipboard api", function() {
+		var clipboardRows;
+
+		function createRow(cellContents) {
+			var tr = editor.dom.create('tr');
+
+			tinymce.each(cellContents, function (html) {
+				tr.appendChild(editor.dom.create('td', null, html));
+			});
+
+			return tr;
+		}
+
+		editor.setContent(
+			'<table>' +
+				'<tr><td>1</td><td>2</td></tr>' +
+				'<tr><td>2</td><td>3</td></tr>' +
+			'</table>'
+		);
+
+		Utils.setSelection('tr:nth-child(1) td', 0);
+		editor.execCommand('mceTableCopyRow');
+
+		clipboardRows = editor.plugins.table.getClipboardRows();
+
+		equal(clipboardRows.length, 1);
+		equal(clipboardRows[0].tagName, 'TR');
+
+		editor.plugins.table.setClipboardRows(clipboardRows.concat([
+			createRow(['a', 'b']),
+			createRow(['c', 'd'])
+		]));
+
+		Utils.setSelection('tr:nth-child(2) td', 0);
+		editor.execCommand('mceTablePasteRowAfter');
+
+		equal(
+			cleanTableHtml(editor.getContent()),
+
+			'<table>' +
+				'<tbody>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>2</td><td>3</td></tr>' +
+					'<tr><td>1</td><td>2</td></tr>' +
+					'<tr><td>a</td><td>b</td></tr>' +
+					'<tr><td>c</td><td>d</td></tr>' +
+				'</tbody>' +
+			'</table>'
+		);
+	});
+
+	test("mceSplitColsBefore", function() {
+		testCommand('mceSplitColsBefore', [
+			{
+				message: 'Should not change anything these is no table cell selection',
+				before: '<p>a</p>',
+				after: '<p>a</p>'
+			},
+
+			{
+				message: 'Should not change anything since there is nothing to split (1 row)',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">1a</td><td>2a</td><td>3a</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should not change anything since there is nothing to split (2 rows)',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+							'<tr><td data-mce-selected="1">1b</td><td>2b</td><td>3b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+						'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+						'<tr><td>1b</td><td>2b</td><td>3b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should split at second row and remove rowspan',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="2">1a</td><td>2a</td><td rowspan="2">3a</td></tr>' +
+							'<tr><td data-mce-selected="1">2b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+							'<tr><td>&nbsp;</td><td>2b</td><td>&nbsp;</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should split at third row and decrease rowspan',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="3">1a</td><td>2a</td><td rowspan="3">3a</td></tr>' +
+							'<tr><td>2b</td></tr>' +
+							'<tr><td data-mce-selected="1">2c</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="2">1a</td><td>2a</td><td rowspan="2">3a</td></tr>' +
+							'<tr><td>2b</td></tr>' +
+							'<tr><td>&nbsp;</td><td>2c</td><td>&nbsp;</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			}
+		]);
+	});
+
+	test("mceSplitColsAfter", function() {
+		testCommand('mceSplitColsAfter', [
+			{
+				message: 'Should not change anything these is no table cell selection',
+				before: '<p>a</p>',
+				after: '<p>a</p>'
+			},
+
+			{
+				message: 'Should not change anything since there is nothing to split (1 row)',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">1a</td><td>2a</td><td>3a</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should not change anything since there is nothing to split (2 rows)',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">1a</td><td>2a</td><td>3a</td></tr>' +
+							'<tr><td>1b</td><td>2b</td><td>3b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+						'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+						'<tr><td>1b</td><td>2b</td><td>3b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should split at second row and remove rowspan',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="2" data-mce-selected="1">1a</td><td>2a</td><td rowspan="2">3a</td></tr>' +
+							'<tr><td>2b</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+							'<tr><td>&nbsp;</td><td>2b</td><td>&nbsp;</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should split at first row and produce td:s with decreased rowspans below',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="3" data-mce-selected="1">1a</td><td>2a</td><td rowspan="3">3a</td></tr>' +
+							'<tr><td>2b</td></tr>' +
+							'<tr><td>2c</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>1a</td><td>2a</td><td>3a</td></tr>' +
+							'<tr><td rowspan="2">&nbsp;</td><td>2b</td><td rowspan="2">&nbsp;</td></tr>' +
+							'<tr><td>2c</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			}
+		]);
+	});
+
 	test("mceTableInsertRowBefore command", function() {
 		editor.setContent('<table><tr><td>1</td><td>2</td></tr></table>');
 		Utils.setSelection('td', 0);
@@ -510,11 +997,176 @@
 		equal(cleanTableHtml(editor.getContent()), '<table><tbody><tr><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>1</td><td>2</td></tr></tbody></table>');
 	});
 
-	test("mceTableMergeCells command with cell selection", function() {
-		editor.getBody().innerHTML = '<table><tr><td class="mce-item-selected">1</td><td class="mce-item-selected">2</td></tr></table>';
-		Utils.setSelection('td', 0);
-		editor.execCommand('mceTableMergeCells');
-		equal(cleanTableHtml(editor.getContent()), '<table><tbody><tr><td colspan="2">12</td></tr></tbody></table>');
+	test("mceTableMergeCells", function() {
+		testCommand('mceTableMergeCells', [
+			{
+				message: 'Should merge all cells into one',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">a1</td><td data-mce-selected="1">b1</td></tr>' +
+							'<tr><td data-mce-selected="1">a2</td><td data-mce-selected="1">b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>a1b1a2b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should merge cells in two cols/rows into one cell with colspan',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">a1</td><td data-mce-selected="1">b1</td></tr>' +
+							'<tr><td data-mce-selected="1">a2</td><td data-mce-selected="1">b2</td></tr>' +
+							'<tr><td>a3</td><td>b3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td colspan="2">a1b1a2b2</td></tr>' +
+							'<tr><td>a3</td><td>b3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should remove all rowspans since the table is fully merged',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="2">a1</td><td data-mce-selected="1">b1</td></tr>' +
+							'<tr><td data-mce-selected="1">b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>a1</td><td>b1b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should remove all colspans since the table is fully merged',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td colspan="2">a1</td></tr>' +
+							'<tr><td data-mce-selected="1">a2</td><td data-mce-selected="1">b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>a1</td></tr>' +
+							'<tr><td>a2b2</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should remove rowspans since the table is fully merged',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td rowspan="3">a1</td><td rowspan="3">b1</td><td data-mce-selected="1">c1</td></tr>' +
+							'<tr><td data-mce-selected="1">c2</td></tr>' +
+							'<tr><td data-mce-selected="1">c3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>a1</td><td>b1</td><td>c1c2c3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should remove colspans since the table is fully merged',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">a1</td><td data-mce-selected="1">b1</td><td data-mce-selected="1">c1</td></tr>' +
+							'<tr><td colspan="3">a2</td></tr>' +
+							'<tr><td colspan="3">a3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td>a1b1c1</td></tr>' +
+							'<tr><td>a2</td></tr>' +
+							'<tr><td>a3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should reduce rowspans to 2 keep the colspan and remove one tr',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td colspan="2" rowspan="2">a1</td><td rowspan="3">b1</td><td data-mce-selected="1">c1</td></tr>' +
+							'<tr><td data-mce-selected="1">c2</td></tr>' +
+							'<tr><td>a3</td><td>b3</td><td data-mce-selected="1">c3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td colspan="2">a1</td><td rowspan="2">b1</td><td rowspan="2">c1c2c3</td></tr>' +
+							'<tr><td>a3</td><td>b3</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			},
+
+			{
+				message: 'Should reduce colspans to 2 keep the rowspan',
+				before: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td data-mce-selected="1">a1</td><td data-mce-selected="1">b1</td><td data-mce-selected="1">c1</td></tr>' +
+							'<tr><td colspan="3">a2</td></tr>' +
+							'<tr><td colspan="2" rowspan="2">a3</td><td>c3</td></tr>' +
+							'<tr><td>c4</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				),
+				after: (
+					'<table>' +
+						'<tbody>' +
+							'<tr><td colspan="2">a1b1c1</td></tr>' +
+							'<tr><td colspan="2">a2</td></tr>' +
+							'<tr><td rowspan="2">a3</td><td>c3</td></tr>' +
+							'<tr><td>c4</td></tr>' +
+						'</tbody>' +
+					'</table>'
+				)
+			}
+		]);
 	});
 
 	test("mceTableSplitCells command", function() {
@@ -554,8 +1206,8 @@
 	test("Delete selected cells", function() {
 		editor.getBody().innerHTML = (
 			'<table><tbody>' +
-			'<tr><td class="mce-item-selected">A1</td><td>A2</td></tr>' +
-			'<tr><td class="mce-item-selected">B1</td><td>B2</td></tr>' +
+			'<tr><td data-mce-selected="1">A1</td><td>A2</td></tr>' +
+			'<tr><td data-mce-selected="1">B1</td><td>B2</td></tr>' +
 			'</tbody></table>' +
 			'<p>x</p>'
 		);
@@ -572,8 +1224,8 @@
 	test("Delete all cells", function() {
 		editor.getBody().innerHTML = (
 			'<table><tbody>' +
-			'<tr><td class="mce-item-selected">A1</td><td class="mce-item-selected">A2</td></tr>' +
-			'<tr><td class="mce-item-selected">B1</td><td class="mce-item-selected">B2</td></tr>' +
+			'<tr><td data-mce-selected="1">A1</td><td data-mce-selected="1">A2</td></tr>' +
+			'<tr><td data-mce-selected="1">B1</td><td data-mce-selected="1">B2</td></tr>' +
 			'</tbody></table>' +
 			'<p>x</p>'
 		);
@@ -601,6 +1253,486 @@
 		equal(
 			editor.getContent(),
 			'<table><tbody><tr><td>&nbsp;</td><td><p>a</p></td></tr></tbody></table><p>x</p>'
+		);
+	});
+
+	var testResizeTable1 = '<table style="width: 426px"><tbody>' +
+			'<tr><td style="height: 20px; width: 200px;" colspan="2" data-mce-style="height: 20px; width: 200px;">A1</td><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">A2</td><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">A3</td></tr>' +
+			'<tr><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">B1</td><td style="height: 20px; width: 200px;" colspan="2" data-mce-style="height: 20px; width: 200px;">B2</td><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">B3</td></tr>' +
+			'<tr><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">C1</td><td style="height: 20px; width: 100px;" data-mce-style="height: 20px; width: 100px;">C2</td><td style="height: 20px; width: 200px;" colspan="2" data-mce-style="height: 20px; width: 200px;">C3</td></tr>' +
+			'<tr><td style="height: 20px; width: 400px;" colspan="4" data-mce-style="height: 20px; width: 400px;">D1</td></tr></tbody></table>';
+
+	var testResizeTable2 = '<table border="1"><tbody>' +
+	'<tr><th style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">A0</th><th style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">A1</th><th style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">A2</th>' +
+	'<th style="height: 20px; width: 40px;" data-mce-style="height: 20px; width: 40px;">A3</th><th style="height: 20px; width: 10px;" data-mce-style="height: 20px; width: 10px;">A4</th></tr><tr><td style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">B0</td><td style="height: 20px; width: 20px; "' +
+	'data-mce-style="height: 20px; width: 20px;">B1</td><td style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">B2</td><td style="height: 20px; width: 40px;" data-mce-style="height: 20px; width: 40px;">B3</td><td style="height: 40px; width: 10px;" rowspan="2" data-mce-style="height: 20px; width: 10px;">' +
+	'B3</td></tr><tr><td style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">C0</td><td style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">C1</td><td style="height: 20px; width: 20px;" data-mce-style="height: 20px; width: 20px;">C2</td><td style="height: 20px; width: 40px;" ' +
+	'data-mce-style="height: 20px; width: 40px;">C3</td></tr></tbody></table>';
+
+	var testResizeTable3 = '<div style=\"display: block; width: 400px;\"><table style=\"border-collapse: collapse; border: 1px solid black;\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tbody><tr><td rowspan=\"2\" width=\"25%\">&nbsp;a</td><td width=\"25%\">&nbsp;b</td><td width=\"25%\">&nbsp;</td>' +
+	'<td width=\"25%\">&nbsp;c</td></tr><tr><td width=\"25%\">&nbsp;d</td><td width=\"25%\">&nbsp;</td><td rowspan=\"2\" width=\"25%\">&nbsp;e</td></tr><tr><td width=\"25%\">&nbsp;f</td><td width=\"25%\">&nbsp;g</td><td width=\"25%\">&nbsp;</td></tr><tr><td width=\"25%\">&nbsp;h</td><td width=\"25%\">&nbsp;i</td><td width=\"25%\">&nbsp;</td><td width=\"25%\">j&nbsp;</td></tr></tbody></table></div>';
+
+	var testResizeTable4 = (
+		'<table>' +
+			'<tbody>' +
+				'<tr>' +
+					'<td>a</td>' +
+					'<td>b</td>' +
+				'</tr>' +
+				'<tr>' +
+					'<td>a</td>' +
+					'<td>b</td>' +
+					'<td>c</td>' +
+				'</tr>' +
+				'<tr>' +
+					'<td>a</td>' +
+				'</tr>' +
+				'<tr>' +
+					'<td>a</td>' +
+					'<td>b</td>' +
+					'<td colspan="2">c</td>' +
+				'</tr>' +
+			'</tbody>' +
+		'</table>'
+	);
+
+	test("Is Pixel/Percentage Based Width", function() {
+		var pixelWidths = ['125px', '200px', '300em'];
+		var percentageWidths = ['25%', '30%', '100%'];
+		var i, pixelBasedSize, percentBasedSize;
+
+		for (i = 0; i < pixelWidths.length; i++) {
+			pixelBasedSize = editor.plugins.table.resizeBars.isPixelBasedSize(pixelWidths[i]);
+			deepEqual(pixelBasedSize, true);
+			percentBasedSize = editor.plugins.table.resizeBars.isPercentageBasedSize(pixelWidths[i]);
+			deepEqual(percentBasedSize, false);
+		}
+		for (i = 0; i < percentageWidths.length; i++) {
+			pixelBasedSize = editor.plugins.table.resizeBars.isPixelBasedSize(percentageWidths[i]);
+			deepEqual(pixelBasedSize, false);
+			percentBasedSize = editor.plugins.table.resizeBars.isPercentageBasedSize(percentageWidths[i]);
+			deepEqual(percentBasedSize, true);
+		}
+	});
+
+	test("Get widths/heights", function() {
+		editor.setContent(testResizeTable1);
+
+		var table = editor.dom.select('table')[0];
+		var details = editor.plugins.table.resizeBars.getTableDetails(table);
+		var tableGrid = editor.plugins.table.resizeBars.getTableGrid(details);
+
+		deepEqual(
+			editor.plugins.table.resizeBars.getWidths(tableGrid, false, table),
+			[100, 100, 100, 100]
+		);
+
+		deepEqual(
+			editor.plugins.table.resizeBars.getPixelHeights(tableGrid),
+			[20, 20, 20, 20]
+		);
+
+		editor.setContent(testResizeTable2);
+
+		table = editor.dom.select('table')[0];
+		details = editor.plugins.table.resizeBars.getTableDetails(table);
+		tableGrid = editor.plugins.table.resizeBars.getTableGrid(details);
+
+		deepEqual(
+			editor.plugins.table.resizeBars.getWidths(tableGrid, false, table),
+			[20, 20, 20, 40, 10]
+		);
+
+		deepEqual(
+			editor.plugins.table.resizeBars.getPixelHeights(tableGrid),
+			[20, 20, 20]
+		);
+
+		editor.setContent(testResizeTable3);
+
+		table = editor.dom.select('table')[0];
+		details = editor.plugins.table.resizeBars.getTableDetails(table);
+		tableGrid = editor.plugins.table.resizeBars.getTableGrid(details);
+
+		deepEqual(
+			editor.plugins.table.resizeBars.getWidths(tableGrid, true, table),
+			[25, 25, 25, 25]
+		);
+	});
+
+	test("Draw bars/clear bars", function() {
+		editor.setContent(testResizeTable1);
+
+		var table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.drawBars(table);
+
+		equal(editor.dom.select('.mce-resize-bar-row').length,
+			4);
+
+		equal(editor.dom.select('.mce-resize-bar-col').length,
+			4);
+
+		editor.plugins.table.resizeBars.clearBars();
+
+		equal(editor.dom.select('.mce-resize-bar-row').length,
+			0);
+
+		equal(editor.dom.select('.mce-resize-bar-col').length,
+			0);
+	});
+
+	test("Draw bars/clear bars on invalid table", function() {
+		editor.setContent(testResizeTable4);
+
+		var table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.drawBars(table);
+
+		equal(editor.dom.select('.mce-resize-bar-row').length,
+			4);
+
+		equal(editor.dom.select('.mce-resize-bar-col').length,
+			4);
+
+		editor.plugins.table.resizeBars.clearBars();
+
+		equal(editor.dom.select('.mce-resize-bar-row').length,
+			0);
+
+		equal(editor.dom.select('.mce-resize-bar-col').length,
+			0);
+	});
+
+	test("Determine deltas", function() {
+		var deltas = editor.plugins.table.resizeBars.determineDeltas([100, 100, 100, 100], 0, 50, 10, false);
+
+		deepEqual(deltas, [50, -50, 0, 0]);
+
+		deltas = editor.plugins.table.resizeBars.determineDeltas([100, 100, 100, 100], 1, 50, 10, false);
+
+		deepEqual(deltas, [0, 50, -50, 0]);
+
+		deltas = editor.plugins.table.resizeBars.determineDeltas([100, 100, 100, 100], 2, 50, 10, false);
+
+		deepEqual(deltas, [0, 0, 50, -50]);
+
+		deltas = editor.plugins.table.resizeBars.determineDeltas([100, 100, 100, 100], 3, 50, 10, false);
+
+		deepEqual(deltas, [0, 0, 0, 50]);
+
+		deltas = editor.plugins.table.resizeBars.determineDeltas([50], 0, 5, 10, true);
+
+		deepEqual(deltas, [50]); // 50 + 50 = 100, one column, percent case
+
+		deltas = editor.plugins.table.resizeBars.determineDeltas([25, 25, 25, 25], 1, 5, 10, true);
+
+		deepEqual(deltas, [0, 5, -5, 0]);
+	});
+
+	test("Adjust width", function() {
+		editor.setContent(testResizeTable1);
+
+		var table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustWidth(table, 50, 0);
+
+		equal(editor.getContent(),
+			'<table style=\"width: 426px;\">' +
+			'<tbody>' +
+			'<tr>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">A1</td>' +
+			'<td style=\"width: 100px; height: 20px;\">A2</td>' +
+			'<td style=\"width: 100px; height: 20px;\">A3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 150px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 150px; height: 20px;\" colspan=\"2\">B2</td>' +
+			'<td style=\"width: 100px; height: 20px;\">B3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 150px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 50px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">C3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 400px; height: 20px;\" colspan=\"4\">D1</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+		editor.setContent(testResizeTable1);
+
+		table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustWidth(table, 50, 1);
+
+		equal(editor.getContent(),
+			'<table style=\"width: 426px;\">' +
+			'<tbody>' +
+			'<tr>' +
+			'<td style=\"width: 250px; height: 20px;\" colspan=\"2\">A1</td>' +
+			'<td style=\"width: 50px; height: 20px;\">A2</td>' +
+			'<td style=\"width: 100px; height: 20px;\">A3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">B2</td>' +
+			'<td style=\"width: 100px; height: 20px;\">B3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 150px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 150px; height: 20px;\" colspan=\"2\">C3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 400px; height: 20px;\" colspan=\"4\">D1</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+		editor.setContent(testResizeTable1);
+
+		table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustWidth(table, 50, 2);
+
+		equal(editor.getContent(),
+			'<table style=\"width: 426px;\">' +
+			'<tbody>' +
+			'<tr>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">A1</td>' +
+			'<td style=\"width: 150px; height: 20px;\">A2</td>' +
+			'<td style=\"width: 50px; height: 20px;\">A3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 250px; height: 20px;\" colspan=\"2\">B2</td>' +
+			'<td style=\"width: 50px; height: 20px;\">B3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 100px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">C3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 400px; height: 20px;\" colspan=\"4\">D1</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+		editor.setContent(testResizeTable1);
+
+		table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustWidth(table, 50, 3);
+
+		equal(editor.getContent(),
+			'<table style=\"width: 476px;\">' +
+			'<tbody>' +
+			'<tr>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">A1</td>' +
+			'<td style=\"width: 100px; height: 20px;\">A2</td>' +
+			'<td style=\"width: 150px; height: 20px;\">A3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 200px; height: 20px;\" colspan=\"2\">B2</td>' +
+			'<td style=\"width: 150px; height: 20px;\">B3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 100px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 100px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 250px; height: 20px;\" colspan=\"2\">C3</td>' +
+			'</tr>' +
+			'<tr>' +
+			'<td style=\"width: 450px; height: 20px;\" colspan=\"4\">D1</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+	});
+
+	test("Adjust height", function() {
+		editor.setContent(testResizeTable2);
+
+		var table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustHeight(table, 50, 0);
+
+		equal(editor.getContent(),
+			'<table border=\"1\">' +
+			'<tbody>' +
+			'<tr style=\"height: 70px;\">' +
+			'<th style=\"width: 20px; height: 70px;\">A0</th>' +
+			'<th style=\"width: 20px; height: 70px;\">A1</th>' +
+			'<th style=\"width: 20px; height: 70px;\">A2</th>' +
+			'<th style=\"width: 40px; height: 70px;\">A3</th>' +
+			'<th style=\"width: 10px; height: 70px;\">A4</th>' +
+			'</tr>' +
+			'<tr style=\"height: 20px;\">' +
+			'<td style=\"width: 20px; height: 20px;\">B0</td>' +
+			'<td style=\"width: 20px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 20px; height: 20px;\">B2</td>' +
+			'<td style=\"width: 40px; height: 20px;\">B3</td>' +
+			'<td style=\"width: 10px; height: 40px;\" rowspan=\"2\">B3</td>' +
+			'</tr>' +
+			'<tr style=\"height: 20px;\">' +
+			'<td style=\"width: 20px; height: 20px;\">C0</td>' +
+			'<td style=\"width: 20px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 20px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 40px; height: 20px;\">C3</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+		editor.setContent(testResizeTable2);
+
+		table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustHeight(table, 50, 1);
+
+		equal(editor.getContent(),
+			'<table border=\"1\">' +
+			'<tbody>' +
+			'<tr style=\"height: 20px;\">' +
+			'<th style=\"width: 20px; height: 20px;\">A0</th>' +
+			'<th style=\"width: 20px; height: 20px;\">A1</th>' +
+			'<th style=\"width: 20px; height: 20px;\">A2</th>' +
+			'<th style=\"width: 40px; height: 20px;\">A3</th>' +
+			'<th style=\"width: 10px; height: 20px;\">A4</th>' +
+			'</tr>' +
+			'<tr style=\"height: 70px;\">' +
+			'<td style=\"width: 20px; height: 70px;\">B0</td>' +
+			'<td style=\"width: 20px; height: 70px;\">B1</td>' +
+			'<td style=\"width: 20px; height: 70px;\">B2</td>' +
+			'<td style=\"width: 40px; height: 70px;\">B3</td>' +
+			'<td style=\"width: 10px; height: 90px;\" rowspan=\"2\">B3</td>' +
+			'</tr>' +
+			'<tr style=\"height: 20px;\">' +
+			'<td style=\"width: 20px; height: 20px;\">C0</td>' +
+			'<td style=\"width: 20px; height: 20px;\">C1</td>' +
+			'<td style=\"width: 20px; height: 20px;\">C2</td>' +
+			'<td style=\"width: 40px; height: 20px;\">C3</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+		editor.setContent(testResizeTable2);
+
+		table = editor.dom.select('table')[0];
+
+		editor.plugins.table.resizeBars.adjustHeight(table, 50, 2);
+
+		equal(editor.getContent(),
+			'<table border=\"1\">' +
+			'<tbody>' +
+			'<tr style=\"height: 20px;\">' +
+			'<th style=\"width: 20px; height: 20px;\">A0</th>' +
+			'<th style=\"width: 20px; height: 20px;\">A1</th>' +
+			'<th style=\"width: 20px; height: 20px;\">A2</th>' +
+			'<th style=\"width: 40px; height: 20px;\">A3</th>' +
+			'<th style=\"width: 10px; height: 20px;\">A4</th>' +
+			'</tr>' +
+			'<tr style=\"height: 20px;\">' +
+			'<td style=\"width: 20px; height: 20px;\">B0</td>' +
+			'<td style=\"width: 20px; height: 20px;\">B1</td>' +
+			'<td style=\"width: 20px; height: 20px;\">B2</td>' +
+			'<td style=\"width: 40px; height: 20px;\">B3</td>' +
+			'<td style=\"width: 10px; height: 90px;\" rowspan=\"2\">B3</td>' +
+			'</tr>' +
+			'<tr style=\"height: 70px;\">' +
+			'<td style=\"width: 20px; height: 70px;\">C0</td>' +
+			'<td style=\"width: 20px; height: 70px;\">C1</td>' +
+			'<td style=\"width: 20px; height: 70px;\">C2</td>' +
+			'<td style=\"width: 40px; height: 70px;\">C3</td>' +
+			'</tr>' +
+			'</tbody>' +
+			'</table>');
+
+	});
+
+	test("Table newcell/newrow events", function() {
+		var cells = [], rows = [], counter = 0;
+
+		editor.on('newcell', function(e) {
+			cells.push(e.node);
+			e.node.setAttribute('data-counter', counter++);
+		});
+
+		editor.on('newrow', function(e) {
+			rows.push(e.node);
+			e.node.setAttribute('data-counter', counter++);
+		});
+
+		editor.plugins.table.insertTable(2, 3);
+
+		equal(cells.length, 6);
+		equal(rows.length, 3);
+
+		equal(cells[cells.length - 1].getAttribute('data-counter'), "8");
+		equal(rows[rows.length - 1].getAttribute('data-counter'), "6");
+	});
+
+	function assertTableSelection(tableHtml, selectCells, cellContents) {
+		function selectRangeXY(table, startTd, endTd) {
+			editor.fire('mousedown', {target: startTd});
+			editor.fire('mouseover', {target: endTd});
+			editor.fire('mouseup', {target: endTd});
+		}
+
+		function getCells(table) {
+			return editor.$(table).find('td').toArray();
+		}
+
+		function getSelectedCells(table) {
+			return editor.$(table).find('td[data-mce-selected]').toArray();
+		}
+
+		editor.setContent(tableHtml);
+
+		var table = editor.$('table')[0];
+		var cells = getCells(table);
+
+		var startTd = tinymce.grep(cells, function(elm) {
+			return elm.innerHTML === selectCells[0];
+		})[0];
+
+		var endTd = tinymce.grep(cells, function(elm) {
+			return elm.innerHTML === selectCells[1];
+		})[0];
+
+		selectRangeXY(table, startTd, endTd);
+
+		var selection = getSelectedCells(table);
+		selection = tinymce.map(selection, function(elm) {
+			return elm.innerHTML;
+		});
+
+		deepEqual(selection, cellContents);
+	}
+
+	test("Table grid selection", function() {
+		assertTableSelection('<table><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>', ['1', '2'], ['1', '2']);
+		assertTableSelection('<table><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>', ['1', '3'], ['1', '3']);
+		assertTableSelection('<table><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>', ['1', '4'], ['1', '2', '3', '4']);
+		assertTableSelection('<table><tr><td colspan="2" rowspan="2">1</td><td>3</td></tr><tr><td>6</td></tr></table>', ['1', '6'], ['1', '3', '6']);
+		assertTableSelection(
+			'<table>' +
+				'<tr>' +
+					'<td>1</td>' +
+					'<td>2</td>' +
+					'<td>3</td>' +
+				'</tr>' +
+				'<tr>' +
+					'<td colspan="2" rowspan="2">4</td>' +
+					'<td>5</td>' +
+				'</tr>' +
+				'<tr>' +
+					'<td>6</td>' +
+				'</tr>' +
+			'</table>',
+			['2', '6'],
+			['2', '3', '4', '5', '6']
 		);
 	});
 })();

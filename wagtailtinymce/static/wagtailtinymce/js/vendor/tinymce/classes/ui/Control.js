@@ -84,7 +84,7 @@ define("tinymce/ui/Control", [
 			self.settings = settings = Tools.extend({}, self.Defaults, settings);
 
 			// Initial states
-			self._id = settings.id || ("tinymce-" + (idCounter++));
+			self._id = settings.id || ('mceu_' + (idCounter++));
 			self._aria = {role: settings.role};
 			self._elmCache = {};
 			self.$ = $;
@@ -157,7 +157,7 @@ define("tinymce/ui/Control", [
 		 * @return {Element} HTML DOM element to render into.
 		 */
 		getContainerElm: function() {
-			return document.body;
+			return DomUtils.getContainer();
 		},
 
 		/**
@@ -366,7 +366,7 @@ define("tinymce/ui/Control", [
 		 */
 		repaint: function() {
 			var self = this, style, bodyStyle, bodyElm, rect, borderBox;
-			var borderW = 0, borderH = 0, lastRepaintRect, round, value;
+			var borderW, borderH, lastRepaintRect, round, value;
 
 			// Use Math.round on all values on IE < 9
 			round = !document.createRange ? Math.round : function(value) {
@@ -433,6 +433,20 @@ define("tinymce/ui/Control", [
 		},
 
 		/**
+		 * Updates the controls layout rect by re-measuing it.
+		 */
+		updateLayoutRect: function() {
+			var self = this;
+
+			self.parent()._lastRect = null;
+
+			DomUtils.css(self.getEl(), {width: '', height: ''});
+
+			self._layoutRect = self._lastRepaintRect = self._lastLayoutRect = null;
+			self.initLayoutRect();
+		},
+
+		/**
 		 * Binds a callback to the specified event. This event can both be
 		 * native browser events like "click" or custom ones like PostRender.
 		 *
@@ -488,7 +502,7 @@ define("tinymce/ui/Control", [
 		 * @method off
 		 * @param {String} [name] Name for the event to unbind.
 		 * @param {function} [callback] Callback function to unbind.
-		 * @return {mxex.ui.Control} Current control object.
+		 * @return {tinymce.ui.Control} Current control object.
 		 */
 		off: function(name, callback) {
 			getEventDispatcher(this).off(name, callback);
@@ -502,7 +516,7 @@ define("tinymce/ui/Control", [
 		 * @method fire
 		 * @param {String} name Name of the event to fire.
 		 * @param {Object} [args] Arguments to pass to the event.
-		 * @param {Boolean} [bubble] Value to control bubbeling. Defaults to true.
+		 * @param {Boolean} [bubble] Value to control bubbling. Defaults to true.
 		 * @return {Object} Current arguments object.
 		 */
 		fire: function(name, args, bubble) {
@@ -687,9 +701,9 @@ define("tinymce/ui/Control", [
 
 			if (typeof value === "undefined") {
 				return self._aria[name];
-			} else {
-				self._aria[name] = value;
 			}
+
+			self._aria[name] = value;
 
 			if (self.state.get('rendered')) {
 				elm.setAttribute(name == 'role' ? name : 'aria-' + name, value);

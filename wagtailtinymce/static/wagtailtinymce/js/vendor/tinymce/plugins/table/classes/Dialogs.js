@@ -188,7 +188,7 @@ define("tinymce/tableplugin/Dialogs", [
 			function onSubmitTableForm() {
 
 				//Explore the layers of the table till we find the first layer of tds or ths
-				function styleTDTH (elm, name, value) {
+				function styleTDTH(elm, name, value) {
 					if (elm.tagName === "TD" || elm.tagName === "TH") {
 						dom.setStyle(elm, name, value);
 					} else {
@@ -273,7 +273,7 @@ define("tinymce/tableplugin/Dialogs", [
 				});
 			}
 
-			function getTDTHOverallStyle (elm, name) {
+			function getTDTHOverallStyle(elm, name) {
 				var cells = editor.dom.select("td,th", elm), firstChildStyle;
 
 				function checkChildren(firstChildStyle, elms) {
@@ -487,7 +487,7 @@ define("tinymce/tableplugin/Dialogs", [
 			}
 
 			// Get selected cells or the current cell
-			cells = editor.dom.select('td.mce-item-selected,th.mce-item-selected');
+			cells = editor.dom.select('td[data-mce-selected],th[data-mce-selected]');
 			cellElm = editor.dom.getParent(editor.selection.getStart(), 'td,th');
 			if (!cells.length && cellElm) {
 				cells.push(cellElm);
@@ -710,7 +710,7 @@ define("tinymce/tableplugin/Dialogs", [
 
 			each(tableElm.rows, function(row) {
 				each(row.cells, function(cell) {
-					if (dom.hasClass(cell, 'mce-item-selected') || cell == cellElm) {
+					if (dom.getAttrib(cell, 'data-mce-selected') || cell == cellElm) {
 						rows.push(row);
 						return false;
 					}

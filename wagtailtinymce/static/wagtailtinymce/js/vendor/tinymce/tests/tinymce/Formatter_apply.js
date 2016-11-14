@@ -15,7 +15,7 @@ module("tinymce.Formatter - Apply", {
 			disable_nodechange: true,
 			entities: 'raw',
 			valid_styles: {
-				'*': 'color,font-size,font-family,background-color,font-weight,font-style,text-decoration,float,margin,margin-top,margin-right,margin-bottom,margin-left,display'
+				'*': 'color,font-size,font-family,background-color,font-weight,font-style,text-decoration,float,margin,margin-top,margin-right,margin-bottom,margin-left,display,text-align'
 			},
 			init_instance_callback: function(ed) {
 				window.editor = ed;
@@ -36,7 +36,7 @@ module("tinymce.Formatter - Apply", {
 			disable_nodechange: true,
 			entities: 'raw',
 			valid_styles: {
-				'*': 'color,font-size,font-family,background-color,font-weight,font-style,text-decoration,float,margin,margin-top,margin-right,margin-bottom,margin-left,display'
+				'*': 'color,font-size,font-family,background-color,font-weight,font-style,text-decoration,float,margin,margin-top,margin-right,margin-bottom,margin-left,display,text-align'
 			},
 			init_instance_callback: function(ed) {
 				window.inlineEditor = ed;
@@ -110,6 +110,17 @@ test('Toggle OFF - Inline element on partially selected text in start/end elemen
 	editor.selection.setRng(rng);
 	editor.formatter.toggle('format');
 	equal(getContent(), '<p>1<b>234</b></p><p><b>123</b>4</p>');
+});
+
+test('Toggle OFF - Inline element with data attribute', function() {
+	editor.formatter.register('format', {inline: 'b'});
+	editor.getBody().innerHTML = '<p><b data-x="1">1</b></p>';
+	var rng = editor.dom.createRng();
+	rng.setStart(editor.dom.select('b')[0].firstChild, 0);
+	rng.setEnd(editor.dom.select('b')[0].firstChild, 1);
+	editor.selection.setRng(rng);
+	editor.formatter.toggle('format');
+	equal(getContent(), '<p>1</p>');
 });
 
 test('Toggle ON - NO inline element on selected text', function() {
@@ -575,6 +586,19 @@ test('Inline element merged with left and right siblings', function() {
 	editor.selection.setRng(rng);
 	editor.formatter.apply('format');
 	equal(getContent(), '<p><b>123456</b></p>', 'Inline element merged with left and right siblings');
+});
+
+test('Inline element merged with data attributed left sibling', function() {
+	editor.formatter.register('format', {
+		inline: 'b'
+	});
+	editor.getBody().innerHTML = '<p><b data-x="1">1234</b>5678</p>';
+	var rng = editor.dom.createRng();
+	rng.setStart(editor.dom.select('p')[0].lastChild, 0);
+	rng.setEnd(editor.dom.select('p')[0].lastChild, 4);
+	editor.selection.setRng(rng);
+	editor.formatter.apply('format');
+	equal(getContent(), '<p><b data-x="1">12345678</b></p>', 'Inline element merged with left sibling');
 });
 
 test('Don\'t merge siblings with whitespace between 1', function() {
@@ -1097,7 +1121,7 @@ test("Applying formats in lists", function() {
 test("Applying formats on a list including child nodes", function(){
 	editor.formatter.register('format', {inline: 'strong'});
 	editor.setContent('<ol><li>a</li><li>b<ul><li>c</li><li>d<br /><ol><li>e</li><li>f</li></ol></li></ul></li><li>g</li></ol>');
-	rng = editor.dom.createRng();
+	var rng = editor.dom.createRng();
 	rng.setStart(editor.dom.select('li')[0].firstChild, 0);
 	rng.setEnd(editor.dom.select('li')[6].firstChild, 1);
 	editor.selection.setRng(rng);
@@ -1447,7 +1471,7 @@ test('format inline on contentEditable: false block', function() {
 	editor.setContent('<p>abc</p><p contenteditable="false">def</p>');
 	Utils.setSelection('p:nth-child(2)', 0, 'p:nth-child(2)', 3);
 	editor.formatter.apply('format');
-	equal(editor.getContent(), '<p>abc</p><p>def</p>', 'Text is not bold');
+	equal(editor.getContent(), '<p>abc</p><p contenteditable="false">def</p>', 'Text is not bold');
 });
 
 test('format block on contentEditable: false block', function() {
@@ -1457,7 +1481,7 @@ test('format block on contentEditable: false block', function() {
 	editor.setContent('<p>abc</p><p contenteditable="false">def</p>');
 	Utils.setSelection('p:nth-child(2)', 0, 'p:nth-child(2)', 3);
 	editor.formatter.apply('format');
-	equal(editor.getContent(), '<p>abc</p><p>def</p>', 'P is not h1');
+	equal(editor.getContent(), '<p>abc</p><p contenteditable="false">def</p>', 'P is not h1');
 });
 
 test('contentEditable: false on start and contentEditable: true on end', function() {
@@ -1467,7 +1491,7 @@ test('contentEditable: false on start and contentEditable: true on end', functio
 	editor.setContent('<p>abc</p><p contenteditable="false">def</p><p>ghi</p>');
 	Utils.setSelection('p:nth-child(2)', 0, 'p:nth-child(3)', 3);
 	editor.formatter.apply('format');
-	equal(editor.getContent(), '<p>abc</p><p>def</p><p><b>ghi</b></p>', 'Text in last paragraph is bold');
+	equal(editor.getContent(), '<p>abc</p><p contenteditable="false">def</p><p><b>ghi</b></p>', 'Text in last paragraph is bold');
 });
 
 test('contentEditable: true on start and contentEditable: false on end', function() {
@@ -1477,7 +1501,7 @@ test('contentEditable: true on start and contentEditable: false on end', functio
 	editor.setContent('<p>abc</p><p contenteditable="false">def</p>');
 	Utils.setSelection('p:nth-child(1)', 0, 'p:nth-child(2)', 3);
 	editor.formatter.apply('format');
-	equal(editor.getContent(), '<p><b>abc</b></p><p>def</p>', 'Text in first paragraph is bold');
+	equal(editor.getContent(), '<p><b>abc</b></p><p contenteditable="false">def</p>', 'Text in first paragraph is bold');
 });
 
 test('contentEditable: true inside contentEditable: false', function() {
@@ -1487,7 +1511,7 @@ test('contentEditable: true inside contentEditable: false', function() {
 	editor.setContent('<p>abc</p><p contenteditable="false"><span contenteditable="true">def</span></p>');
 	Utils.setSelection('span', 0, 'span', 3);
 	editor.formatter.apply('format');
-	equal(editor.getContent(), '<p>abc</p><p><span><b>def</b></span></p>', 'Text is bold');
+	equal(editor.getContent(), '<p>abc</p><p contenteditable="false"><span contenteditable="true"><b>def</b></span></p>', 'Text is bold');
 });
 
 test('Del element wrapping blocks', function() {
@@ -1533,6 +1557,56 @@ test('Align specified table element with collapsed: false and selection collapse
 	});
 	editor.formatter.apply('format', {}, editor.getBody().firstChild);
 	equal(getContent(), '<table style="float: right;"><tbody><tr><td>a</td></tr></tbody></table>');
+});
+
+test('Align nested table cell to same as parent', function() {
+	editor.setContent(
+		'<table>' +
+			'<tbody>' +
+				'<tr>' +
+					'<td style="text-align: right;">a' +
+						'<table>' +
+							'<tbody>' +
+								'<tr>' +
+									'<td><b>b</b></td>' +
+								'</tr>' +
+							'</tbody>' +
+						'</table>' +
+					'</td>' +
+				'</tr>' +
+			'</tbody>' +
+		'</table>'
+	);
+
+	Utils.setSelection('b', 0);
+
+	editor.formatter.register('format', {
+		selector: 'td',
+		styles: {
+			'text-align': 'right'
+		}
+	});
+
+	editor.formatter.apply('format', {}, editor.$('td td')[0]);
+
+	equal(
+		getContent(),
+		'<table>' +
+			'<tbody>' +
+				'<tr>' +
+					'<td style="text-align: right;">a' +
+						'<table>' +
+							'<tbody>' +
+								'<tr>' +
+									'<td style="text-align: right;"><b>b</b></td>' +
+								'</tr>' +
+							'</tbody>' +
+						'</table>' +
+					'</td>' +
+				'</tr>' +
+			'</tbody>' +
+		'</table>'
+	);
 });
 
 test('Apply ID format to around existing bookmark node', function() {
@@ -1640,4 +1714,19 @@ asyncTest('Bug #7412 - valid_styles affects the Bold and Italic buttons, althoug
             equal(getContent(), '<p>1 <strong><span style="text-decoration: underline;">1234</span></strong> 1</p>');
         }
     });
+});
+
+test('Format selection from with end at beginning of block', function(){
+	editor.setContent("<div id='a'>one</div><div id='b'>two</div>");
+	editor.focus();
+	Utils.setSelection('#a', 0, '#b', 0);
+	editor.execCommand('formatBlock', false, 'h1');
+	equal(getContent(), '<h1 id="a">one</h1>\n<div id="b">two</div>');
+});
+
+test('Format selection over fragments', function(){
+	editor.setContent("<strong>a</strong>bc<em>d</em>");
+	Utils.setSelection('strong', 1, 'em', 0);
+	editor.formatter.apply('underline');
+	equal(getContent(), '<p><strong>a</strong><span style="text-decoration: underline;">bc</span><em>d</em></p>');
 });

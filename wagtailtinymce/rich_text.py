@@ -97,6 +97,9 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
             else:
                 kwargs['menubar'] = ' '.join(self.kwargs['menus'])
 
+        if 'passthru_init_keys' in self.kwargs:
+            kwargs.update(self.kwargs['passthru_init_keys'])
+
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 
     def value_from_datadict(self, data, files, name):

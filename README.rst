@@ -79,6 +79,12 @@ This is a dict. By default, TinyMCE is loaded with the following options set:
 - ``language`` (taken from Django settings)
 - ``language_load``
 
+TinyMCE Init Passthru
+---------------------
+
+To pass any additional keys to the ``init()`` function of TinyMCE (`see the TinyMCE docs <https://www.tinymce.com/docs/configure/>`_),
+set the ``passthru_init_keys`` keyword arg to a dictionary of options.
+
 TinyMCE plugins and tools
 ========================= 
 

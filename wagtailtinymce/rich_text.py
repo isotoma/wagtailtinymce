@@ -27,6 +27,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+from django.conf import settings
 from django.forms import widgets
 from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
@@ -56,7 +57,8 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,
-                'language': translation.to_locale(translation.get_language()),
+                'language': translation.to_locale(
+                    translation.get_language() or settings.LANGUAGE_CODE),
                 'language_load': True,
             },
         }

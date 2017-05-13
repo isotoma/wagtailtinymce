@@ -34,6 +34,8 @@ from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
 from wagtail.wagtailcore.rich_text import DbWhitelister
 from wagtail.wagtailcore.rich_text import expand_db_html
 
+from .settings import get_default_buttons
+
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
 
@@ -41,16 +43,7 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
     def getDefaultArgs(cls):
         return {
             'buttons': [
-                [
-                    ['undo', 'redo'],
-                    ['styleselect'],
-                    ['bold', 'italic'],
-                    ['bullist', 'numlist', 'outdent', 'indent'],
-                    ['table'],
-                    ['link', 'unlink'],
-                    ['wagtaildoclink', 'wagtailimage', 'wagtailembed'],
-                    ['pastetext', 'fullscreen'],
-                ]
+                get_default_buttons(),
             ],
             'menus': False,
             'options': {

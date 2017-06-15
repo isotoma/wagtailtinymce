@@ -64,6 +64,8 @@ By default, TinyMCE is loaded with buttons for undo/redo, a styles dropdown, bol
 
 These can be overridden with a Django settings variable:
 
+.. code-block:: python
+
     WAGTAILTINYMCE_BUTTON_LIST = [
         ['undo', 'redo'],
         ['styleselect'],

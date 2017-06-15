@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 var mcePlugins = ['hr', 'code', 'fullscreen', 'noneditable', 'paste', 'table'],
     mceTools = ['inserttable'],
     mceExternalPlugins = {};
-
 function registerMCEPlugin(name, path, language) {
     if (path) {
         mceExternalPlugins[name] = path;
@@ -52,6 +51,7 @@ function makeTinyMCEEditable(id, kwargs) {
     $.extend(kwargs, {
         selector: '#' + id.toString(),
         plugins: mcePlugins,
+        paste_as_text: true,
         tools: mceTools,
         external_plugins: mceExternalPlugins,
         setup: function (editor) {

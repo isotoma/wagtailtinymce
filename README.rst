@@ -62,6 +62,21 @@ These are configured as a list of menu bars, each containing a list of groups, e
 
 By default, TinyMCE is loaded with buttons for undo/redo, a styles dropdown, bold/italic, lists and tables, link/unlink, Wagtail documents/images/embeds, paste filter toggle and edit fullscreen.
 
+These can be overridden with a Django settings variable:
+
+.. code-block:: python
+
+    WAGTAILTINYMCE_BUTTON_LIST = [
+        ['undo', 'redo'],
+        ['styleselect'],
+        ['bold', 'italic'],
+        ['bullist', 'numlist', 'outdent', 'indent'],
+        ['table'],
+        ['link', 'unlink'],
+        ['wagtaildoclink', 'wagtailimage', 'wagtailembed'],
+        ['pastetext', 'fullscreen'],
+    ]
+
 Menu
 ----
 

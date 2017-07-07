@@ -31,7 +31,7 @@ For example, to use TinyMCE for all ``RichTextField`` and ``RichTextBlock`` inst
 Or, to use TinyMCE for certain instances...
 
 .. code-block:: python
-    
+
     WAGTAILADMIN_RICH_TEXT_EDITORS = {
         'default': {
             'WIDGET': 'wagtail.wagtailadmin.rich_text.HalloRichTextArea'
@@ -40,18 +40,18 @@ Or, to use TinyMCE for certain instances...
             'WIDGET': 'wagtailtinymce.rich_text.TinyMCERichTextArea'
         },
     }
-    
+
 ...and declare fields with the corresponding key in the ``editor`` parameter:
 
 .. code-block:: python
 
     html_field = RichTextField(editor='tinymce', ...)
     stream_field = StreamField([('html', RichTextBlock(editor='tinymce', ...)), ...])
-    
-TinyMCE configuration
-===================== 
 
-The ``TinyMCERichTextArea`` constructor accepts keyword arguments for buttons, menus and options which are merged with defaults and passed to TinyMCE. 
+TinyMCE configuration
+=====================
+
+The ``TinyMCERichTextArea`` constructor accepts keyword arguments for buttons, menus and options which are merged with defaults and passed to TinyMCE.
 
 However, Wagtail does not currently allow for passing parameters to this constructor. To change the configuration you must create and register a subclass of ``TinyMCERichTextArea`` and pass these parameters or amend defaults in the subclass constructor.
 
@@ -86,7 +86,7 @@ To pass any additional keys to the ``init()`` function of TinyMCE (`see the Tiny
 set the ``passthru_init_keys`` keyword arg to a dictionary of options.
 
 TinyMCE plugins and tools
-========================= 
+=========================
 
 TinyMCE is loaded with the following plugins:
 
@@ -136,6 +136,16 @@ A complete ``wagtail_hooks.py`` file example:
             mark_safe(json.dumps(static('js/my-tinymce-plugin.js'))),
             to_js_primitive(translation.to_locale(translation.get_language())),
         )
+
+How to upgrade TinyMCE
+======================
+
+1. Clone [TinyMCE](https://github.com/tinymce/tinymce) repo in a different folder.
+1. Follow the instructions on this repo to build it using Grunt.
+1. As of version 4.6.4, a `/js` folder will be generated in the root of the TinyMCE repo.
+Copy its contents to `wagtailtinymce/wagtailtinymce/static/wagtailtinymce/js/vendor`, replacing the contents of this folder.
+1. Create a new branch with the versioning instructions below so that this new version is accessible with `pip`.
+The branch for the version `4.6.4` is `TinyMCE4.6.4`.
 
 Versioning
 ==========

@@ -26,6 +26,8 @@
 
 import json
 
+from django.conf import settings
+
 from django.core.urlresolvers import reverse
 from django.templatetags.static import static
 from django.utils import translation
@@ -66,7 +68,7 @@ def insert_editor_js():
         '    window.tinymce.suffix = "";'
         '}}());'
         '</script>',
-        to_js_primitive(static('wagtailtinymce/js/vendor/tinymce')),
+        to_js_primitive(settings.STATIC_URL + 'wagtailtinymce/js/vendor/tinymce'),
     )
     js_files = [
         'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',

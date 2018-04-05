@@ -34,8 +34,14 @@ from django.utils.html import format_html
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
 
-from wagtail.wagtailadmin.templatetags.wagtailadmin_tags import hook_output
-from wagtail.wagtailcore import hooks
+from wagtail import __version__
+
+if __version__ >= '2.0':
+    from wagtail.admin.templatetags.wagtailadmin_tags import hook_output
+    from wagtail.core import hooks
+else:
+    from wagtail.wagtailadmin.templatetags.wagtailadmin_tags import hook_output
+    from wagtail.wagtailcore import hooks
 
 
 def to_js_primitive(string):

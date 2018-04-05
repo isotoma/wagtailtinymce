@@ -26,7 +26,7 @@
 
 import json
 
-from django.core.urlresolvers import reverse
+from django import __version__ as DJANGO_VERSION
 from django.templatetags.static import static
 from django.utils import translation
 from django.utils.html import escape
@@ -34,9 +34,14 @@ from django.utils.html import format_html
 from django.utils.html import format_html_join
 from django.utils.safestring import mark_safe
 
-from wagtail import __version__
+from wagtail import __version__ as WAGTAIL_VERSION
 
-if __version__ >= '2.0':
+if DJANGO_VERSION >= '2.0':
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
+
+if WAGTAIL_VERSION >= '2.0':
     from wagtail.admin.templatetags.wagtailadmin_tags import hook_output
     from wagtail.core import hooks
 else:

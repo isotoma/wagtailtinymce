@@ -79,6 +79,12 @@ This is a dict. By default, TinyMCE is loaded with the following options set:
 - ``language`` (taken from Django settings)
 - ``language_load``
 
+TinyMCE Init Passthru
+---------------------
+
+To pass any additional keys to the ``init()`` function of TinyMCE (`see the TinyMCE docs <https://www.tinymce.com/docs/configure/>`_),
+set the ``passthru_init_keys`` keyword arg to a dictionary of options.
+
 TinyMCE plugins and tools
 ========================= 
 
@@ -117,7 +123,7 @@ A complete ``wagtail_hooks.py`` file example:
     from django.utils import translation
     from django.utils.html import format_html
     from django.utils.safestring import mark_safe
-    from wagtail.wagtailcore import hooks
+    from wagtail.core import hooks
 
     @hooks.register('insert_tinymce_js')
     def my_plugin_js():

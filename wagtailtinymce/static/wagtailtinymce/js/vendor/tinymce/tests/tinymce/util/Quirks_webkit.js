@@ -245,10 +245,10 @@ if (tinymce.isWebKit) {
 	});
 
 	test('Type over bold text in fully selected block and keep bold', function() {
-		editor.getBody().innerHTML = '<p><i><b>x</b></i></p>';
+		editor.getBody().innerHTML = '<p><i><b>x</b></i></p><p>y</p>';
 		Utils.setSelection('b', 0, 'b', 1);
 		editor.fire("keypress", {keyCode: 65, charCode: 65});
-		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><i><b>a</b></i></p>');
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><i><b>a</b></i></p><p>y</p>');
 		equal(editor.selection.getStart().nodeName, 'B');
 	});
 
@@ -266,6 +266,73 @@ if (tinymce.isWebKit) {
 		editor.fire("keypress", {keyCode: 65, charCode: 65});
 		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><i>1<b>a</b>3</i></p>');
 		equal(editor.selection.getStart().nodeName, 'B');
+	});
+
+	test('Delete last character in formats', function() {
+		editor.getBody().innerHTML = '<p><b><i>b</i></b></p>';
+		Utils.setSelection('i', 1);
+		editor.fire("keydown", {keyCode: 8});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><b><i><br></i></b></p>');
+		equal(editor.selection.getStart(true).nodeName, 'I');
+	});
+
+	test('ForwardDelete last character in formats', function() {
+		editor.getBody().innerHTML = '<p><b><i>b</i></b></p>';
+		Utils.setSelection('i', 0);
+		editor.fire("keydown", {keyCode: 46});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><b><i><br></i></b></p>');
+		equal(editor.selection.getStart(true).nodeName, 'I');
+	});
+
+	test('Delete in empty in formats text block', function() {
+		var rng;
+
+		editor.getBody().innerHTML = '<p>a</p><p><b><i><br></i></b></p><p><b><i><br></i></b></p>';
+		rng = editor.dom.createRng();
+		rng.setStartBefore(editor.$('br:last')[0]);
+		rng.setEndBefore(editor.$('br:last')[0]);
+		editor.selection.setRng(rng);
+		editor.fire("keydown", {keyCode: 8});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p>a</p><p><b><i><br></i></b></p>');
+		equal(editor.selection.getStart(true).nodeName, 'I');
+	});
+
+	test('ForwardDelete in empty formats text block', function() {
+		var rng;
+
+		editor.getBody().innerHTML = '<p>a</p><p><b><i><br></i></b></p><p><b><i><br></i></b></p>';
+		rng = editor.dom.createRng();
+		rng.setStartBefore(editor.$('br:first')[0]);
+		rng.setEndBefore(editor.$('br:first')[0]);
+		editor.selection.setRng(rng);
+		editor.fire("keydown", {keyCode: 46});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p>a</p><p><b><i><br></i></b></p>');
+		equal(editor.selection.getStart(true).nodeName, 'I');
+	});
+
+	test('Type over all contents', function() {
+		editor.getBody().innerHTML = '<p>abc</p>';
+		Utils.setSelection('p', 0, 'p', 3);
+		editor.fire('keypress', {charCode: 97});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p>a</p>');
+		equal(editor.selection.getRng().startContainer.data, 'a');
+		equal(editor.selection.getRng().startOffset, 1);
+	});
+
+	test('ForwardDelete all contents', function() {
+		editor.getBody().innerHTML = '<p>abc</p>';
+		Utils.setSelection('p', 0, 'p', 3);
+		editor.fire('keydown', {keyCode: 46});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><br data-mce-bogus="1"></p>');
+		equal(editor.selection.getStart(true).nodeName, 'P');
+	});
+
+	test('Delete all contents', function() {
+		editor.getBody().innerHTML = '<p>abc</p>';
+		Utils.setSelection('p', 0, 'p', 3);
+		editor.fire('keydown', {keyCode: 8});
+		equal(Utils.cleanHtml(editor.getBody().innerHTML), '<p><br data-mce-bogus="1"></p>');
+		equal(editor.selection.getStart(true).nodeName, 'P');
 	});
 } else {
 	test("Skipped since the browser isn't WebKit", function() {

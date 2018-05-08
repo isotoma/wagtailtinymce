@@ -36,6 +36,10 @@
 	}
 
 	function resolve(id) {
+		if (exports.privateModules && id in exports.privateModules) {
+			return;
+		}
+
 		var target = exports;
 		var fragments = id.split(/[.\/]/);
 
@@ -66,6 +70,8 @@
 	}
 
 	function define(id, dependencies, definition) {
+		var privateModules, i;
+
 		if (typeof id !== 'string') {
 			throw 'invalid module definition, module id must be defined and be a string';
 		}
@@ -83,10 +89,26 @@
 		});
 
 		if (--moduleCount === 0) {
-			for (var i = 0; i < exposedModules.length; i++) {
+			for (i = 0; i < exposedModules.length; i++) {
 				register(exposedModules[i]);
 			}
 		}
+
+		// Expose private modules for unit tests
+		if (exports.AMDLC_TESTS) {
+			privateModules = exports.privateModules || {};
+
+			for (id in modules) {
+				privateModules[id] = modules[id];
+			}
+
+			for (i = 0; i < exposedModules.length; i++) {
+				delete privateModules[exposedModules[i]];
+			}
+
+			exports.privateModules = privateModules;
+		}
+
 	}
 
 	function expose(ids) {
@@ -109,6 +131,7 @@
 	expose(["tinymce/pasteplugin/Utils"]);
 
 	load('classes/Utils.js');
+	load('classes/SmartPaste.js');
 	load('classes/Clipboard.js');
 	load('classes/WordFilter.js');
 	load('classes/Quirks.js');
@@ -117,4 +140,4 @@
 	writeScripts();
 })(this);
 
-// $hash: c5e503d60803d64e4292c696293a8c39
+// $hash: b44f5a1e3c57aa2f0306f05ae969c01f

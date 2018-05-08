@@ -27,12 +27,13 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+from django.conf import settings
 from django.forms import widgets
 from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
-from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
-from wagtail.wagtailcore.rich_text import DbWhitelister
-from wagtail.wagtailcore.rich_text import expand_db_html
+from wagtail.admin.edit_handlers import RichTextFieldPanel
+from wagtail.admin.rich_text.converters.editor_html import DbWhitelister
+from wagtail.core.rich_text import expand_db_html
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
@@ -56,7 +57,8 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
             'options': {
                 'browser_spellcheck': True,
                 'noneditable_leave_contenteditable': True,
-                'language': translation.to_locale(translation.get_language()),
+                'language': translation.to_locale(
+                    translation.get_language() or settings.LANGUAGE_CODE),
                 'language_load': True,
             },
         }
@@ -96,6 +98,9 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
                 kwargs['menubar'] = False
             else:
                 kwargs['menubar'] = ' '.join(self.kwargs['menus'])
+
+        if 'passthru_init_keys' in self.kwargs:
+            kwargs.update(self.kwargs['passthru_init_keys'])
 
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 

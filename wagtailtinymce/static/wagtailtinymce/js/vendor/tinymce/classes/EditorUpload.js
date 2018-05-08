@@ -15,13 +15,25 @@
  * @class tinymce.EditorUpload
  */
 define("tinymce/EditorUpload", [
-	"tinymce/util/Tools",
+	"tinymce/util/Arr",
 	"tinymce/file/Uploader",
 	"tinymce/file/ImageScanner",
-	"tinymce/file/BlobCache"
-], function(Tools, Uploader, ImageScanner, BlobCache) {
+	"tinymce/file/BlobCache",
+	"tinymce/file/UploadStatus"
+], function(Arr, Uploader, ImageScanner, BlobCache, UploadStatus) {
 	return function(editor) {
-		var blobCache = new BlobCache();
+		var blobCache = new BlobCache(), uploader, imageScanner, settings = editor.settings;
+		var uploadStatus = new UploadStatus();
+
+		function aliveGuard(callback) {
+			return function(result) {
+				if (editor.selection) {
+					return callback(result);
+				}
+
+				return [];
+			};
+		}
 
 		// Replaces strings without regexps to avoid FF regexp to big issue
 		function replaceString(content, search, replace) {
@@ -47,84 +59,136 @@ define("tinymce/EditorUpload", [
 		}
 
 		function replaceUrlInUndoStack(targetUrl, replacementUrl) {
-			Tools.each(editor.undoManager.data, function(level) {
+			Arr.each(editor.undoManager.data, function(level) {
 				level.content = replaceImageUrl(level.content, targetUrl, replacementUrl);
 			});
 		}
 
-		function uploadImages(callback) {
-			var uploader = new Uploader({
-				url: editor.settings.images_upload_url,
-				basePath: editor.settings.images_upload_base_path,
-				credentials: editor.settings.images_upload_credentials,
-				handler: editor.settings.images_upload_handler
-			});
-
-			function imageInfosToBlobInfos(imageInfos) {
-				return Tools.map(imageInfos, function(imageInfo) {
-					return imageInfo.blobInfo;
-				});
-			}
-
-			return scanForImages().then(imageInfosToBlobInfos).then(uploader.upload).then(function(result) {
-				result = Tools.map(result, function(uploadInfo) {
-					var image;
-
-					image = editor.dom.select('img[src="' + uploadInfo.blobInfo.blobUri() + '"]')[0];
-
-					if (image) {
-						replaceUrlInUndoStack(image.src, uploadInfo.url);
-
-						editor.$(image).attr({
-							src: uploadInfo.url,
-							'data-mce-src': editor.convertURL(uploadInfo.url, 'src')
-						});
-					}
-
-					return {
-						element: image,
-						status: uploadInfo.status
-					};
-				});
-
-				if (callback) {
-					callback(result);
-				}
-
-				return result;
-			}, function() {
-				// Silent
-				// TODO: Maybe execute some failure callback here?
+		function openNotification() {
+			return editor.notificationManager.open({
+				text: editor.translate('Image uploading...'),
+				type: 'info',
+				timeout: -1,
+				progressBar: true
 			});
 		}
 
+		function replaceImageUri(image, resultUri) {
+			blobCache.removeByUri(image.src);
+			replaceUrlInUndoStack(image.src, resultUri);
+
+			editor.$(image).attr({
+				src: resultUri,
+				'data-mce-src': editor.convertURL(resultUri, 'src')
+			});
+		}
+
+		function uploadImages(callback) {
+			if (!uploader) {
+				uploader = new Uploader(uploadStatus, {
+					url: settings.images_upload_url,
+					basePath: settings.images_upload_base_path,
+					credentials: settings.images_upload_credentials,
+					handler: settings.images_upload_handler
+				});
+			}
+
+			return scanForImages().then(aliveGuard(function(imageInfos) {
+				var blobInfos;
+
+				blobInfos = Arr.map(imageInfos, function(imageInfo) {
+					return imageInfo.blobInfo;
+				});
+
+				return uploader.upload(blobInfos, openNotification).then(aliveGuard(function(result) {
+					result = Arr.map(result, function(uploadInfo, index) {
+						var image = imageInfos[index].image;
+
+						if (uploadInfo.status && editor.settings.images_replace_blob_uris !== false) {
+							replaceImageUri(image, uploadInfo.url);
+						}
+
+						return {
+							element: image,
+							status: uploadInfo.status
+						};
+					});
+
+					if (callback) {
+						callback(result);
+					}
+
+					return result;
+				}));
+			}));
+		}
+
+		function uploadImagesAuto(callback) {
+			if (settings.automatic_uploads !== false) {
+				return uploadImages(callback);
+			}
+		}
+
+		function isValidDataUriImage(imgElm) {
+			return settings.images_dataimg_filter ? settings.images_dataimg_filter(imgElm) : true;
+		}
+
 		function scanForImages() {
-			return ImageScanner.findAll(editor.getBody(), blobCache).then(function(result) {
-				Tools.each(result, function(resultItem) {
+			if (!imageScanner) {
+				imageScanner = new ImageScanner(uploadStatus, blobCache);
+			}
+
+			return imageScanner.findAll(editor.getBody(), isValidDataUriImage).then(aliveGuard(function(result) {
+				Arr.each(result, function(resultItem) {
 					replaceUrlInUndoStack(resultItem.image.src, resultItem.blobInfo.blobUri());
 					resultItem.image.src = resultItem.blobInfo.blobUri();
+					resultItem.image.removeAttribute('data-mce-src');
 				});
 
 				return result;
-			});
+			}));
 		}
 
 		function destroy() {
 			blobCache.destroy();
+			uploadStatus.destroy();
+			imageScanner = uploader = null;
 		}
 
-		function replaceBlobWithBase64(content) {
+		function replaceBlobUris(content) {
 			return content.replace(/src="(blob:[^"]+)"/g, function(match, blobUri) {
+				var resultUri = uploadStatus.getResultUri(blobUri);
+
+				if (resultUri) {
+					return 'src="' + resultUri + '"';
+				}
+
 				var blobInfo = blobCache.getByUri(blobUri);
 
-				return 'src="data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64() + '"';
+				if (!blobInfo) {
+					blobInfo = Arr.reduce(editor.editorManager.editors, function(result, editor) {
+						return result || editor.editorUpload.blobCache.getByUri(blobUri);
+					}, null);
+				}
+
+				if (blobInfo) {
+					return 'src="data:' + blobInfo.blob().type + ';base64,' + blobInfo.base64() + '"';
+				}
+
+				return match;
 			});
 		}
 
-		editor.on('setContent paste', scanForImages);
+		editor.on('setContent', function() {
+			if (editor.settings.automatic_uploads !== false) {
+				uploadImagesAuto();
+			} else {
+				scanForImages();
+			}
+		});
 
 		editor.on('RawSaveContent', function(e) {
-			e.content = replaceBlobWithBase64(e.content);
+			e.content = replaceBlobUris(e.content);
 		});
 
 		editor.on('getContent', function(e) {
@@ -132,12 +196,30 @@ define("tinymce/EditorUpload", [
 				return;
 			}
 
-			e.content = replaceBlobWithBase64(e.content);
+			e.content = replaceBlobUris(e.content);
+		});
+
+		editor.on('PostRender', function() {
+			editor.parser.addNodeFilter('img', function(images) {
+				Arr.each(images, function(img) {
+					var src = img.attr('src');
+
+					if (blobCache.getByUri(src)) {
+						return;
+					}
+
+					var resultUri = uploadStatus.getResultUri(src);
+					if (resultUri) {
+						img.attr('src', resultUri);
+					}
+				});
+			});
 		});
 
 		return {
 			blobCache: blobCache,
 			uploadImages: uploadImages,
+			uploadImagesAuto: uploadImagesAuto,
 			scanForImages: scanForImages,
 			destroy: destroy
 		};

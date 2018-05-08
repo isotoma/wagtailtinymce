@@ -76,7 +76,7 @@
 
 		parser = new tinymce.html.DomParser({}, new tinymce.html.Schema({invalid_elements : 'hr,br'}));
 		root = parser.parse('\n<hr />\n<br />\n<div>\n<hr />\n<br />\n<img src="file.gif" data-mce-src="file.gif" />\n<hr />\n<br />\n</div>\n<hr />\n<br />\n');
-		equal(serializer.serialize(root), '<div><img src="file.gif" data-mce-src="file.gif" alt="" /></div>', 'Whitespace where SaxParser will produce multiple whitespace nodes');
+		equal(serializer.serialize(root), '<div><img src="file.gif" data-mce-src="file.gif" /></div>', 'Whitespace where SaxParser will produce multiple whitespace nodes');
 		deepEqual(countNodes(root), {body:1, div:1, img:1}, 'Whitespace where SaxParser will produce multiple whitespace nodes (count)');
 	});
 
@@ -526,6 +526,17 @@
 				'<div><b data-mce-bogus="1">a</b> <b data-mce-bogus="1">b</b><p>c</p></div>')
 			),
 			'<div>a b<p>c</p></div>'
+		);
+	});
+
+	test('Bug #7582 removes whitespace between bogus elements before a block', function() {
+		var serializer = new tinymce.html.Serializer();
+
+		equal(
+			serializer.serialize(new tinymce.html.DomParser().parse(
+				'<div>1 <span data-mce-bogus="1">2</span><div>3</div></div>')
+			),
+			'<div>1 2<div>3</div></div>'
 		);
 	});
 })();

@@ -29,9 +29,12 @@
  */
 define("tinymce/file/Uploader", [
 	"tinymce/util/Promise",
-	"tinymce/util/Tools"
-], function(Promise, Tools) {
-	return function(settings) {
+	"tinymce/util/Tools",
+	"tinymce/util/Fun"
+], function(Promise, Tools, Fun) {
+	return function(uploadStatus, settings) {
+		var pendingPromises = {};
+
 		function fileName(blobInfo) {
 			var ext, extensions;
 
@@ -60,16 +63,24 @@ define("tinymce/file/Uploader", [
 				id: blobInfo.id,
 				blob: blobInfo.blob,
 				base64: blobInfo.base64,
-				filename: Tools.constant(fileName(blobInfo))
+				filename: Fun.constant(fileName(blobInfo))
 			};
 		}
 
-		function defaultHandler(blobInfo, success, failure) {
+		function defaultHandler(blobInfo, success, failure, progress) {
 			var xhr, formData;
 
 			xhr = new XMLHttpRequest();
-			xhr.withCredentials = settings.credentials;
 			xhr.open('POST', settings.url);
+			xhr.withCredentials = settings.credentials;
+
+			xhr.upload.onprogress = function(e) {
+				progress(e.loaded / e.total * 100);
+			};
+
+			xhr.onerror = function() {
+				failure("Image upload failed due to a XHR Transport error. Code: " + xhr.status);
+			};
 
 			xhr.onload = function() {
 				var json;
@@ -95,58 +106,118 @@ define("tinymce/file/Uploader", [
 			xhr.send(formData);
 		}
 
-		function upload(blobInfos) {
-			return new Promise(function(resolve, reject) {
-				var handler = settings.handler, queue, index = 0, uploadedIdMap = {};
-
-				// If no url is configured then resolve
-				if (!settings.url && handler === defaultHandler) {
-					resolve([]);
-					return;
-				}
-
-				queue = Tools.map(blobInfos, function(blobInfo) {
-					return {
-						status: false,
-						blobInfo: blobInfo,
-						url: ''
-					};
-				});
-
-				function uploadNext() {
-					var previousResult, queueItem = queue[index++];
-
-					if (!queueItem) {
-						resolve(queue);
-						return;
-					}
-
-					// Only upload unique blob once
-					previousResult = uploadedIdMap[queueItem.blobInfo.id()];
-					if (previousResult) {
-						queueItem.url = previousResult;
-						queueItem.status = true;
-						uploadNext();
-						return;
-					}
-
-					handler(blobInfoToData(queueItem.blobInfo), function(url) {
-						uploadedIdMap[queueItem.blobInfo.id()] = url;
-						queueItem.url = url;
-						queueItem.status = true;
-						uploadNext();
-					}, function(failure) {
-						queueItem.status = false;
-						reject(failure);
-					});
-				}
-
-				uploadNext();
+		function noUpload() {
+			return new Promise(function(resolve) {
+				resolve([]);
 			});
+		}
+
+		function handlerSuccess(blobInfo, url) {
+			return {
+				url: url,
+				blobInfo: blobInfo,
+				status: true
+			};
+		}
+
+		function handlerFailure(blobInfo, error) {
+			return {
+				url: '',
+				blobInfo: blobInfo,
+				status: false,
+				error: error
+			};
+		}
+
+		function resolvePending(blobUri, result) {
+			Tools.each(pendingPromises[blobUri], function(resolve) {
+				resolve(result);
+			});
+
+			delete pendingPromises[blobUri];
+		}
+
+		function uploadBlobInfo(blobInfo, handler, openNotification) {
+			uploadStatus.markPending(blobInfo.blobUri());
+
+			return new Promise(function(resolve) {
+				var notification, progress;
+
+				var noop = function() {
+				};
+
+				try {
+					var closeNotification = function() {
+						if (notification) {
+							notification.close();
+							progress = noop; // Once it's closed it's closed
+						}
+					};
+
+					var success = function(url) {
+						closeNotification();
+						uploadStatus.markUploaded(blobInfo.blobUri(), url);
+						resolvePending(blobInfo.blobUri(), handlerSuccess(blobInfo, url));
+						resolve(handlerSuccess(blobInfo, url));
+					};
+
+					var failure = function() {
+						closeNotification();
+						uploadStatus.removeFailed(blobInfo.blobUri());
+						resolvePending(blobInfo.blobUri(), handlerFailure(blobInfo, failure));
+						resolve(handlerFailure(blobInfo, failure));
+					};
+
+					progress = function(percent) {
+						if (percent < 0 || percent > 100) {
+							return;
+						}
+
+						if (!notification) {
+							notification = openNotification();
+						}
+
+						notification.progressBar.value(percent);
+					};
+
+					handler(blobInfoToData(blobInfo), success, failure, progress);
+				} catch (ex) {
+					resolve(handlerFailure(blobInfo, ex.message));
+				}
+			});
+		}
+
+		function isDefaultHandler(handler) {
+			return handler === defaultHandler;
+		}
+
+		function pendingUploadBlobInfo(blobInfo) {
+			var blobUri = blobInfo.blobUri();
+
+			return new Promise(function(resolve) {
+				pendingPromises[blobUri] = pendingPromises[blobUri] || [];
+				pendingPromises[blobUri].push(resolve);
+			});
+		}
+
+		function uploadBlobs(blobInfos, openNotification) {
+			blobInfos = Tools.grep(blobInfos, function(blobInfo) {
+				return !uploadStatus.isUploaded(blobInfo.blobUri());
+			});
+
+			return Promise.all(Tools.map(blobInfos, function(blobInfo) {
+				return uploadStatus.isPending(blobInfo.blobUri()) ?
+					pendingUploadBlobInfo(blobInfo) : uploadBlobInfo(blobInfo, settings.handler, openNotification);
+			}));
+		}
+
+		function upload(blobInfos, openNotification) {
+			return (!settings.url && isDefaultHandler(settings.handler)) ? noUpload() : uploadBlobs(blobInfos, openNotification);
 		}
 
 		settings = Tools.extend({
 			credentials: false,
+			// We are adding a notify argument to this (at the moment, until it doesn't work)
 			handler: defaultHandler
 		}, settings);
 

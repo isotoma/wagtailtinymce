@@ -1,10 +1,10 @@
 Changes
 =======
 
-4.2.1.6 (unreleased)
+4.4.3.1 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Update to TinyMCE 4.4.3
 
 
 4.2.1.5 (2016-06-08)

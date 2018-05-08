@@ -31,9 +31,9 @@ from django.conf import settings
 from django.forms import widgets
 from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
-from wagtail.wagtailadmin.edit_handlers import RichTextFieldPanel
-from wagtail.wagtailcore.rich_text import DbWhitelister
-from wagtail.wagtailcore.rich_text import expand_db_html
+from wagtail.admin.edit_handlers import RichTextFieldPanel
+from wagtail.admin.rich_text.converters.editor_html import DbWhitelister
+from wagtail.core.rich_text import expand_db_html
 
 
 class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):

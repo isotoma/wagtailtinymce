@@ -32,7 +32,7 @@ from django.forms import widgets
 from django.utils import translation
 from wagtail.utils.widgets import WidgetWithScript
 from wagtail.admin.edit_handlers import RichTextFieldPanel
-from wagtail.admin.rich_text.converters.editor_html import DbWhitelister
+from wagtail.core.whitelist import Whitelister
 from wagtail.core.rich_text import expand_db_html
 
 
@@ -108,4 +108,4 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         original_value = super(TinyMCERichTextArea, self).value_from_datadict(data, files, name)
         if original_value is None:
             return None
-        return DbWhitelister.clean(original_value)
+        return Whitelister().clean(original_value)

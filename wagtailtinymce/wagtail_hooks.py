@@ -81,6 +81,7 @@ def insert_editor_js():
     )
     js_files = [
         'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',
+        'wagtailtinymce/js/vendor/tinymce/tinymce.min.js',
         'wagtailtinymce/js/tinymce-editor.js',
     ]
     js_includes = format_html_join(

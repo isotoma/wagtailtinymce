@@ -54,6 +54,7 @@ function makeTinyMCEEditable(id, kwargs) {
         plugins: mcePlugins,
         tools: mceTools,
         external_plugins: mceExternalPlugins,
+        branding: false,
         setup: function (editor) {
             editor.on('change', function () {
                 editor.save();

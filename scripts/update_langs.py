@@ -28,6 +28,7 @@ def main():
     translations = {}
     for dirpath, _dirnames, filenames in os.walk(TRANSLATION_DIR):
         for filename in filenames:
+            print('Filename' + filename)
             if os.path.splitext(filename)[1] != '{}po'.format(os.path.extsep):
                 continue
             po = polib.pofile(os.path.join(dirpath, filename))

@@ -80,7 +80,7 @@ def insert_editor_js():
         to_js_primitive(static('wagtailtinymce/js/vendor/tinymce')),
     )
     js_files = [
-        'wagtailtinymce/js/vendor/tinymce/tinymce.jquery.js',
+        'wagtailtinymce/js/vendor/tinymce/jquery.tinymce.min.js',
         'wagtailtinymce/js/vendor/tinymce/tinymce.min.js',
         'wagtailtinymce/js/tinymce-editor.js',
     ]

@@ -62,5 +62,7 @@ function makeTinyMCEEditable(id, kwargs) {
         }
     });
 
-    tinymce.init(kwargs);
+    setTimeout(function () {
+        tinymce.init(kwargs);
+    }, 1);
 }

@@ -125,6 +125,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 ModalWorkflow({
                     url: url,
                     urlParams: urlParams,
+                    onload: PAGE_CHOOSER_MODAL_ONLOAD_HANDLERS,
                     responses: {
                         pageChosen: function(pageData) {
                             editor.undoManager.transact(function() {

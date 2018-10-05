@@ -76,6 +76,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 ModalWorkflow({
                     url: url,
                     urlParams: urlParams,
+                    onload: EMBED_CHOOSER_MODAL_ONLOAD_HANDLERS,
                     responses: {
                         embedChosen: function(embedData) {
                             var elem = $(embedData).get(0);

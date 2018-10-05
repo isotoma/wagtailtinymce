@@ -1,7 +1,18 @@
 Changes
 =======
 
-4.4.3.1 (unreleased)
+4.7.13.2 (2018-10-05)
+--------------------
+
+- Update to support Wagtail 2.2.2
+
+4.7.13 (2018-05-31)
+--------------------
+
+- Update to TinyMCE 4.7.13
+- Update to support Wagtail 2
+
+4.4.3.1 (2018-05-29)
 --------------------
 
 - Update to TinyMCE 4.4.3

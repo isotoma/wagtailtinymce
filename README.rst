@@ -140,12 +140,11 @@ A complete ``wagtail_hooks.py`` file example:
 How to upgrade TinyMCE
 ======================
 
-1. Clone [TinyMCE](https://github.com/tinymce/tinymce) repo in a different folder.
-1. Follow the instructions on this repo to build it using Grunt.
-1. As of version 4.6.4, a `/js` folder will be generated in the root of the TinyMCE repo.
-Copy its contents to `wagtailtinymce/wagtailtinymce/static/wagtailtinymce/js/vendor`, replacing the contents of this folder.
-1. Create a new branch with the versioning instructions below so that this new version is accessible with `pip`.
-The branch for the version `4.6.4` is `TinyMCE4.6.4`.
+#. Clone [TinyMCE](https://github.com/tinymce/tinymce) repo in a different folder.
+#. Follow the instructions on this repo to build it using Grunt.
+#. As of version 4.6.4, a `/js` folder will be generated in the root of the TinyMCE repo.
+#. Copy its contents to `wagtailtinymce/wagtailtinymce/static/wagtailtinymce/js/vendor`, replacing the contents of this folder.
+#. Create a new branch with the versioning instructions below so that this new version is accessible with `pip`. (The branch for the version `4.6.4` is `TinyMCE4.6.4`.)
 
 Versioning
 ==========

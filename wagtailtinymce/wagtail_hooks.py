@@ -66,6 +66,14 @@ def insert_editor_css():
     return css_includes + hook_output('insert_tinymce_css')
 
 
+def _format_js_includes(js_files):
+    return format_html_join(
+        '\n',
+        '<script src="{0}"></script>',
+        ((static(filename),) for filename in js_files)
+    )
+
+
 @hooks.register('insert_editor_js')
 def insert_editor_js():
     preload = format_html(
@@ -79,16 +87,11 @@ def insert_editor_js():
         '</script>',
         to_js_primitive(static('wagtailtinymce/js/vendor/tinymce')),
     )
-    js_files = [
+    js_includes = _format_js_includes([
         'wagtailtinymce/js/vendor/tinymce/jquery.tinymce.min.js',
         'wagtailtinymce/js/vendor/tinymce/tinymce.min.js',
         'wagtailtinymce/js/tinymce-editor.js',
-    ]
-    js_includes = format_html_join(
-        '\n',
-        '<script src="{0}"></script>',
-        ((static(filename),) for filename in js_files)
-    )
+    ])
     return preload + js_includes + hook_output('insert_tinymce_js')
 
 
@@ -109,7 +112,7 @@ def images_richtexteditor_js():
 
 @hooks.register('insert_tinymce_js')
 def embeds_richtexteditor_js():
-    return format_html(
+    preload = format_html(
         """
         <script>
             registerMCEPlugin("wagtailembeds", {}, {});
@@ -118,6 +121,10 @@ def embeds_richtexteditor_js():
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailembeds.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )
+    js_includes = _format_js_includes([
+        'wagtailembeds/js/embed-chooser-modal.js',
+    ])
+    return preload + js_includes
 
 
 @hooks.register('insert_tinymce_js')
@@ -135,7 +142,7 @@ def links_richtexteditor_js():
 
 @hooks.register('insert_tinymce_js')
 def docs_richtexteditor_js():
-    return format_html(
+    preload = format_html(
         """
         <script>
             registerMCEPlugin("wagtaildoclink", {}, {});
@@ -144,3 +151,8 @@ def docs_richtexteditor_js():
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaildoclink.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )
+    js_includes = _format_js_includes([
+        'wagtaildocs/js/document-chooser.js',
+        'wagtaildocs/js/document-chooser-modal.js',
+    ])
+    return preload + js_includes

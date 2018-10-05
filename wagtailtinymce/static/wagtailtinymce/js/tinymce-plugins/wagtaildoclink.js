@@ -102,6 +102,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 ModalWorkflow({
                     url: url,
                     urlParams: urlParams,
+                    onload: DOCUMENT_CHOOSER_MODAL_ONLOAD_HANDLERS,
                     responses: {
                         documentChosen: function(pageData) {
                             editor.undoManager.transact(function() {

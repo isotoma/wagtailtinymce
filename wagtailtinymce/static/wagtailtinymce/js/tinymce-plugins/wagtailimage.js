@@ -81,6 +81,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 ModalWorkflow({
                     url: url,
                     urlParams: urlParams,
+                    onload: IMAGE_CHOOSER_MODAL_ONLOAD_HANDLERS,
                     responses: {
                         imageChosen: function(imageData) {
                             var elem = $(imageData.html).get(0);

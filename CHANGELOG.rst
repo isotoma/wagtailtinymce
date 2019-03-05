@@ -1,6 +1,11 @@
 Changes
 =======
 
+4.7.13.4 (2019-03-05)
+--------------------
+
+- Import page-chooser and page-chooser-modal for the link plugin
+
 4.7.13.3 (2018-11-01)
 --------------------
 

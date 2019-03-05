@@ -129,7 +129,7 @@ def embeds_richtexteditor_js():
 
 @hooks.register('insert_tinymce_js')
 def links_richtexteditor_js():
-    return format_html(
+    preload = format_html(
         """
         <script>
             registerMCEPlugin("wagtaillink", {}, {});
@@ -138,6 +138,11 @@ def links_richtexteditor_js():
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtaillink.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
     )
+    js_includes = _format_js_includes([
+        'wagtailadmin/js/page-chooser.js',
+        'wagtailadmin/js/page-chooser-modal.js',
+    ])
+    return preload + js_includes
 
 
 @hooks.register('insert_tinymce_js')

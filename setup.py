@@ -46,7 +46,7 @@ install_requires = [
 
 setup(
     name='wagtailtinymce',
-    version='4.7.13.3',
+    version='4.7.13.4',
     description='A TinyMCE editor integration for Wagtail',
     author='Richard Mitchell',
     author_email='richard.mitchell@isotoma.com',

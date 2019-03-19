@@ -97,7 +97,7 @@ def insert_editor_js():
 
 @hooks.register('insert_tinymce_js')
 def images_richtexteditor_js():
-    return format_html(
+    preload = format_html(
         """
         <script>
             registerMCEPlugin("wagtailimage", {}, {});
@@ -108,7 +108,11 @@ def images_richtexteditor_js():
         to_js_primitive(translation.to_locale(translation.get_language())),
         to_js_primitive(reverse('wagtailimages:chooser_select_format', args=['00000000']))
     )
-
+    js_includes = _format_js_includes([
+        'wagtailimages/js/image-chooser-modal.js',
+        'wagtailimages/js/image-chooser.js'
+    ])
+    return preload + js_includes
 
 @hooks.register('insert_tinymce_js')
 def embeds_richtexteditor_js():

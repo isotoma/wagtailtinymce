@@ -121,6 +121,10 @@ class TinyMCERichTextArea(WidgetWithScript, widgets.Textarea):
         if 'passthru_init_keys' in self.kwargs:
             kwargs.update(self.kwargs['passthru_init_keys'])
 
+        if 'table' in self.kwargs:
+            for key, values in self.kwargs['table'].items():
+                kwargs[f'table_{key}'] = values
+
         return "makeTinyMCEEditable({0}, {1});".format(json.dumps(id_), json.dumps(kwargs))
 
     def value_from_datadict(self, data, files, name):

@@ -1,6 +1,16 @@
 Changes
 =======
 
+4.7.13.6 (2019-04-24)
+--------------------
+
+- Add support of table related options
+
+4.7.13.5 (2019-03-20)
+--------------------
+
+- Import image-chooser and image-chooser-modal for the image plugin
+
 4.7.13.4 (2019-03-05)
 --------------------
 

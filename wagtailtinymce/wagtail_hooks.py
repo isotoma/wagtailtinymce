@@ -102,7 +102,7 @@ def images_richtexteditor_js():
         """,
         to_js_primitive(static('wagtailtinymce/js/tinymce-plugins/wagtailimage.js')),
         to_js_primitive(translation.to_locale(translation.get_language())),
-        to_js_primitive(reverse('wagtailimages:select_format', args=['00000000']))
+        to_js_primitive(reverse('wagtailimages_chooser:select_format', args=['00000000']))
     )
 
 
